@@ -26,15 +26,18 @@ class _MainViewState extends State<MainView> {
   List<BottomNavigationBarItem> _buildButtonBar() {
     return <BottomNavigationBarItem>[
       BottomNavigationBarItem(
-        icon: Icon(Icons.home_filled),
+        icon: Icon(Icons.home_filled, size: 35),
         label: 'Trang chủ',
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.folder_open_rounded),
+        icon: Icon(Icons.photo_album, size: 35),
         label: 'Thư viện',
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.whatshot_rounded),
+        icon: Icon(
+          Icons.whatshot_rounded,
+          size: 35,
+        ),
         label: 'Streak',
       ),
     ];
