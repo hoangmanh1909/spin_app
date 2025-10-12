@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:spin_app/spin_result_modal.dart';
 
 class LuckyWheelScreen extends StatefulWidget {
   @override
@@ -14,6 +15,8 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
   double _currentRotation = 0;
   bool _isSpinning = false;
   int _selectedIndex = -1;
+  String? storyFromAPI;
+  bool isUserLoggedIn = false;
 
   final List<WheelItem> items = [
     WheelItem('Cuel a yuu', '🐕', Colors.yellow),
@@ -79,39 +82,49 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
   }
 
   void _showResult(WheelItem item) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('🎉 Chúc mừng!'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              item.emoji,
-              style: TextStyle(fontSize: 60),
-            ),
-            SizedBox(height: 16),
-            Text(
-              item.label,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
-          ),
-        ],
-      ),
+    SpinResultModal.show(
+      context,
+      slotName: 'Ô may mắn số 7',
+      story: storyFromAPI, // có thể là null tạm thời
+      isLoggedIn: isUserLoggedIn,
+      onLoginTap: () => Navigator.pushNamed(context, '/login'),
+      onViewDetail: () => Navigator.pushNamed(context, '/storyDetail'),
     );
+
+    // showDialog(
+    //   context: context,
+    //   builder: (context) => AlertDialog(
+    //     title: Text('🎉 Chúc mừng!'),
+    //     content: Column(
+    //       mainAxisSize: MainAxisSize.min,
+    //       children: [
+    //         Text(
+    //           item.emoji,
+    //           style: TextStyle(fontSize: 60),
+    //         ),
+    //         SizedBox(height: 16),
+    //         Text(
+    //           item.label,
+    //           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    //         ),
+    //       ],
+    //     ),
+    //     actions: [
+    //       TextButton(
+    //         onPressed: () => Navigator.pop(context),
+    //         child: Text('OK'),
+    //       ),
+    //     ],
+    //   ),
+    // );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 240, 189, 22),
-      body: Container(
+      body: SingleChildScrollView(
+          child: Container(
         margin: EdgeInsets.only(top: 50),
         alignment: AlignmentDirectional.center,
         child: Column(
@@ -199,9 +212,46 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
                 ),
               ),
             ),
+            SizedBox(height: 20),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.whatshot_rounded,
+                  size: 30,
+                  color: const Color.fromARGB(255, 251, 88, 0),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  "Điểm danh 3 ngày liên tiếp",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                )
+              ],
+            ),
+
+            SizedBox(height: 12),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.offline_bolt,
+                  size: 28,
+                  color: const Color.fromARGB(255, 251, 88, 0),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  "1 lượt miễn phí",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                )
+              ],
+            ),
+
+            SizedBox(height: 30),
           ],
         ),
-      ),
+      )),
     );
   }
 }
