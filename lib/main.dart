@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:spin_app/main_view.dart';
+import 'package:spin_app/sreen/main_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

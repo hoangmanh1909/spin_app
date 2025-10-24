@@ -58,7 +58,7 @@ class _SpinResultDialog extends StatefulWidget {
 
 class _SpinResultDialogState extends State<_SpinResultDialog> {
   late ConfettiController _confettiController;
-
+  bool _navigating = false;
   @override
   void initState() {
     super.initState();
@@ -155,7 +155,24 @@ class _SpinResultDialogState extends State<_SpinResultDialog> {
                       ),
                       const SizedBox(height: 20),
                       ElevatedButton(
-                        onPressed: widget.onLoginTap,
+                        onPressed: _navigating
+                            ? null
+                            : () async {
+                                // đóng modal trước
+                                Navigator.of(context).pop();
+
+                                // tránh double call
+                                setState(() => _navigating = true);
+
+                                // gọi callback (nó sẽ push AuthScreen)
+                                try {
+                                  widget.onLoginTap?.call();
+                                } finally {
+                                  // chỉ để an toàn; modal đã đóng nên state này không quan trọng nữa
+                                  // nhưng giữ để tránh trạng thái treo
+                                  setState(() => _navigating = false);
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color.fromARGB(255, 244, 219, 27),
                           minimumSize: const Size(double.infinity, 52),

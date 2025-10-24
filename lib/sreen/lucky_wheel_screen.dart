@@ -1,7 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:spin_app/spin_result_modal.dart';
+import 'package:spin_app/sreen/auth_sreen.dart';
+import 'package:spin_app/sreen/detail_screen.dart';
+import 'package:spin_app/sreen/spin_result_modal.dart';
 
 class LuckyWheelScreen extends StatefulWidget {
   @override
@@ -85,38 +87,37 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
     SpinResultModal.show(
       context,
       slotName: 'Ô may mắn số 7',
-      story: storyFromAPI, // có thể là null tạm thời
+      story: storyFromAPI,
       isLoggedIn: isUserLoggedIn,
-      onLoginTap: () => Navigator.pushNamed(context, '/login'),
-      onViewDetail: () => Navigator.pushNamed(context, '/storyDetail'),
-    );
+      onLoginTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AuthScreen()),
+        );
 
-    // showDialog(
-    //   context: context,
-    //   builder: (context) => AlertDialog(
-    //     title: Text('🎉 Chúc mừng!'),
-    //     content: Column(
-    //       mainAxisSize: MainAxisSize.min,
-    //       children: [
-    //         Text(
-    //           item.emoji,
-    //           style: TextStyle(fontSize: 60),
-    //         ),
-    //         SizedBox(height: 16),
-    //         Text(
-    //           item.label,
-    //           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-    //         ),
-    //       ],
-    //     ),
-    //     actions: [
-    //       TextButton(
-    //         onPressed: () => Navigator.pop(context),
-    //         child: Text('OK'),
-    //       ),
-    //     ],
-    //   ),
-    // );
+        if (result == true) {
+          setState(() => isUserLoggedIn = true);
+          // ✅ Mở lại modal kết quả sau khi login
+          Future.delayed(const Duration(milliseconds: 300), () {
+            SpinResultModal.show(
+              context,
+              slotName: 'Ô may mắn số 7',
+              story: storyFromAPI,
+              isLoggedIn: true,
+              onViewDetail: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => StoryDetailScreen(item: item)),
+              ),
+            );
+          });
+        }
+      },
+      onViewDetail: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => StoryDetailScreen(item: item)),
+      ),
+    );
   }
 
   @override

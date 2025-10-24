@@ -2,11 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:spin_app/auth_sreen.dart';
-import 'package:spin_app/history_screen.dart';
-import 'package:spin_app/lucky_wheel_screen.dart';
+import 'package:spin_app/sreen/auth_sreen.dart';
+import 'package:spin_app/sreen/history_screen.dart';
+import 'package:spin_app/sreen/lucky_wheel_screen.dart';
 import 'package:spin_app/models/login_response.dart';
-import 'package:spin_app/streak_sreen.dart';
+import 'package:spin_app/sreen/streak_sreen.dart';
 
 class MainView extends StatefulWidget {
   const MainView({super.key});
