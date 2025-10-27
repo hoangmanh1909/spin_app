@@ -2,17 +2,18 @@ class SpinConfigResponse {
   int? id;
   String? name;
   int? itemId;
-  int? weight;
+  double? weight;
   String? itemType;
   String? itemContent;
-
+  String? image;
   SpinConfigResponse(
       {this.id,
       this.name,
       this.itemId,
       this.weight,
       this.itemType,
-      this.itemContent});
+      this.itemContent,
+      this.image});
 
   SpinConfigResponse.fromJson(Map<String, dynamic> json) {
     id = json['Id'];
@@ -21,6 +22,7 @@ class SpinConfigResponse {
     weight = json['Weight'];
     itemType = json['ItemType'];
     itemContent = json['ItemContent'];
+    image = json['Image'];
   }
 
   Map<String, dynamic> toJson() {
@@ -31,6 +33,8 @@ class SpinConfigResponse {
     data['Weight'] = weight;
     data['ItemType'] = itemType;
     data['ItemContent'] = itemContent;
+    data["Image"] = image;
+
     return data;
   }
 }

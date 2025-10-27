@@ -1,9 +1,16 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:spin_app/controller/process_controller.dart';
+import 'package:spin_app/models/response_object.dart';
+import 'package:spin_app/models/spin_config_response.dart';
 import 'package:spin_app/sreen/auth_sreen.dart';
 import 'package:spin_app/sreen/detail_screen.dart';
 import 'package:spin_app/sreen/spin_result_modal.dart';
+import 'dart:ui' as ui;
+import 'package:spin_app/utils/image_cache.dart';
 
 class LuckyWheelScreen extends StatefulWidget {
   @override
@@ -11,39 +18,185 @@ class LuckyWheelScreen extends StatefulWidget {
 }
 
 class _LuckyWheelScreenState extends State<LuckyWheelScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  late AnimationController _dotController;
+  String _dots = '';
+
+  final ProcessController _con = ProcessController();
+
   Animation<double>? _animation;
+
   double _currentRotation = 0;
   bool _isSpinning = false;
   int _selectedIndex = -1;
   String? storyFromAPI;
   bool isUserLoggedIn = false;
+  Map<String, ui.Image?> _loadedImages = {}; // ✅ Cache ảnh
+  bool _isLoadingImages = true;
 
-  final List<WheelItem> items = [
-    WheelItem('Cuel a yuu', '🐕', Colors.yellow),
-    WheelItem('Sube money', '💰', Colors.yellow.shade300),
-    WheelItem('Love', '❤️', Colors.pink.shade300),
-    WheelItem('Strong', '💪', Colors.orange.shade300),
-    WheelItem('Gift', '🎁', Colors.green),
-    WheelItem('Mystery', '❓', Colors.purple),
-    WheelItem('Camera', '📷', Colors.blue.shade300),
-    WheelItem('Shiba', '🐶', Colors.lightBlue.shade200),
-  ];
+  List<WheelItem> items = [];
+
+  //   WheelItem('Cuel a yuu', '🐕', Colors.yellow),
+  //   WheelItem('Sube money', '💰', Colors.yellow.shade300),
+  //   WheelItem('Love', '❤️', Colors.pink.shade300),
+  //   WheelItem('Strong', '💪', Colors.orange.shade300),
+  //   WheelItem('Gift', '🎁', Colors.green),
+  //   WheelItem('Mystery', '❓', Colors.purple),
+  //   WheelItem('Camera', '📷', Colors.blue.shade300),
+  //   WheelItem('Shiba', '🐶', Colors.lightBlue.shade200),
+  // ];
 
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 6),
+      duration: const Duration(seconds: 12),
     );
+
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeIn,
+    );
+
+    // Animation cho hiệu ứng "..."
+    _dotController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )
+      ..addListener(() {
+        final count = (3 * _dotController.value).floor() + 1;
+        setState(() => _dots = '.' * count);
+      })
+      ..repeat();
+
+    Future.microtask(() => _loadSpinConfig());
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _fadeController.dispose();
+    _dotController.dispose();
     super.dispose();
+  }
+
+  Color _getColorByType(String type) {
+    switch (type) {
+      case "AnimalMeme":
+        return Colors.yellow;
+      case "FunFact":
+        return Colors.yellow.shade300;
+      case "LoveNote":
+        return Colors.pink.shade300;
+      case "Fortune":
+        return Colors.orange.shade300;
+      case "Reward":
+        return Colors.green;
+      case "Mystery":
+        return Colors.purple;
+      case "Challenge":
+        return Colors.blue.shade300;
+      case "MemeText":
+        return Colors.lightBlue.shade200;
+      default:
+        return Colors.grey.shade300;
+    }
+  }
+
+  void _loadSpinConfig() async {
+    try {
+      final box = await Hive.openBox('spin_cache');
+      final cachedData = box.get('spin_items');
+
+      // 🧠 B1: nếu có cache → load trước (để giao diện không trống)
+      if (cachedData != null) {
+        final cachedList = (jsonDecode(cachedData) as List).map((e) {
+          try {
+            final content = e['ItemContent']?.toString() ?? '[null-content]';
+            final image = e['Image']?.toString() ?? '[null-image]';
+            final type = e['ItemType']?.toString() ?? '[null-type]';
+
+            return WheelItem(content, image, _getColorByType(type), e['Id']);
+          } catch (err) {
+            rethrow;
+          }
+        }).toList();
+
+        if (mounted) {
+          setState(() => items = cachedList);
+          await _loadImages();
+          setState(() {
+            _isLoadingImages = false;
+          });
+        }
+      }
+      ResponseObject res = await _con.getSpinConfig();
+
+      if (res.code == "00") {
+        if (mounted) {
+          List<SpinConfigResponse> spin = List<SpinConfigResponse>.from(
+              (jsonDecode(res.data!)
+                  .map((model) => SpinConfigResponse.fromJson(model))));
+
+          List<WheelItem> items1 = [];
+          for (int i = 0; i < spin.length; i++) {
+            var _spin = spin[i];
+
+            WheelItem item = WheelItem(_spin.itemContent!, _spin.image!,
+                _getColorByType(_spin.itemType!), _spin.id!);
+            items1.add(item);
+          }
+          if (mounted) {
+            setState(() => items = items1);
+          }
+          await box.put('spin_items', res.data);
+          await _loadImages();
+          setState(() {
+            _isLoadingImages = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('⚠️ ${res.message}')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('⚠️ Lỗi mạng: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadImages() async {
+    final Map<String, ui.Image?> newImages = {};
+
+    for (var item in items) {
+      if (item.emoji.startsWith('http')) {
+        final image = await ImageSpinCache.loadImage(item.emoji);
+        newImages[item.emoji] = image;
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _loadedImages = newImages;
+        _isLoadingImages = false; // ✅ Khi load xong
+      });
+      _fadeController.forward(); // ✅ Fade-in vòng quay
+    }
   }
 
   void _spinWheel() {
@@ -56,7 +209,7 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
 
     // Random số vòng quay (3-5 vòng) + góc dừng ngẫu nhiên
     final random = Random();
-    final extraRotations = 3 + random.nextInt(3);
+    final extraRotations = 5 + random.nextInt(3);
     final selectedIndex = random.nextInt(items.length);
     final anglePerItem = 360 / items.length;
     final targetAngle = (extraRotations * 360) +
@@ -144,22 +297,84 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
             Stack(
               alignment: Alignment.center,
               children: [
-                AnimatedBuilder(
-                  animation: _animation ?? _controller,
-                  builder: (context, child) {
-                    return Transform.rotate(
-                      angle:
-                          ((_animation?.value ?? _currentRotation) * pi / 180),
-                      alignment: Alignment.center,
-                      child: child,
-                    );
-                  },
-                  child: CustomPaint(
-                    size: Size(320, 320),
-                    painter: WheelPainter(items: items),
-                  ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 600),
+                  child: !_isLoadingImages
+                      ? SizedBox(
+                          width: 320,
+                          height: 320, // ✅ đảm bảo kích thước cố định
+                          child: FadeTransition(
+                            key: const ValueKey("wheel"),
+                            opacity: _fadeAnimation,
+                            child: Transform.rotate(
+                              angle: ((_animation?.value ?? _currentRotation) *
+                                  pi /
+                                  180),
+                              alignment: Alignment.center,
+                              child: CustomPaint(
+                                size: const Size(320, 320),
+                                painter: WheelPainter(
+                                    items: items, images: _loadedImages),
+                              ),
+                            ),
+                          ),
+                        )
+                      : SizedBox(
+                          width: 320,
+                          height: 320, // ✅ giữ chiều cao bằng nhau
+                          child: Column(
+                            key: const ValueKey("loading"),
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              RotationTransition(
+                                turns: Tween(begin: 0.0, end: 1.0).animate(
+                                  CurvedAnimation(
+                                    parent: _controller
+                                      ..repeat(
+                                          period: const Duration(seconds: 3)),
+                                    curve: Curves.linear,
+                                  ),
+                                ),
+                                child: Container(
+                                  width: 120,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: SweepGradient(
+                                      colors: [
+                                        Colors.yellowAccent.withOpacity(0.9),
+                                        Colors.orangeAccent,
+                                        Colors.yellowAccent.withOpacity(0.9),
+                                      ],
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(25),
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 40),
+                              Text(
+                                "Đang chuẩn bị vòng quay cho bạn$_dots",
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                 ),
-                // Tâm vòng quay
+
+                // Tâm vòng quay (vẫn hiển thị luôn)
                 Container(
                   width: 60,
                   height: 60,
@@ -172,15 +387,16 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
                     child: Container(
                       width: 25,
                       height: 25,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.yellow,
                         shape: BoxShape.circle,
                       ),
                     ),
                   ),
                 ),
-                // Mũi tên chỉ (ở trên)
-                Positioned(
+
+                // Mũi tên chỉ
+                const Positioned(
                   top: -10,
                   child: Icon(
                     Icons.arrow_drop_down,
@@ -261,14 +477,18 @@ class WheelItem {
   final String label;
   final String emoji;
   final Color color;
+  final int id;
 
-  WheelItem(this.label, this.emoji, this.color);
+  WheelItem(this.label, this.emoji, this.color, this.id);
 }
 
 class WheelPainter extends CustomPainter {
   final List<WheelItem> items;
-
-  WheelPainter({required this.items});
+  final Map<String, ui.Image?> images;
+  WheelPainter({
+    required this.items,
+    required this.images,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -284,13 +504,15 @@ class WheelPainter extends CustomPainter {
       ..strokeWidth = 8;
     canvas.drawCircle(center, radius, borderPaint);
 
+    // ✅ Bỏ saveLayer
     for (int i = 0; i < items.length; i++) {
       final startAngle = (i * anglePerItem - 90) * pi / 180;
       final sweepAngle = anglePerItem * pi / 180;
-
-      // Vẽ từng phần
       final paint = Paint()
         ..color = items[i].color
+        ..isAntiAlias = true
+        ..filterQuality = FilterQuality.high
+        ..blendMode = BlendMode.src // ✅ Thêm này
         ..style = PaintingStyle.fill;
 
       canvas.drawArc(
@@ -305,6 +527,7 @@ class WheelPainter extends CustomPainter {
       final dividerPaint = Paint()
         ..color = Colors.black
         ..style = PaintingStyle.stroke
+        ..filterQuality = FilterQuality.high
         ..strokeWidth = 2;
 
       final dividerEnd = Offset(
@@ -313,68 +536,42 @@ class WheelPainter extends CustomPainter {
       );
       canvas.drawLine(center, dividerEnd, dividerPaint);
 
-      // Vẽ text và emoji
       final middleAngle = startAngle + sweepAngle / 2;
-      final textRadius = radius * 0.65;
-      final textCenter = Offset(
-        center.dx + textRadius * cos(middleAngle),
-        center.dy + textRadius * sin(middleAngle),
+      final imageRadius = radius * 0.65;
+      final imageCenter = Offset(
+        center.dx + imageRadius * cos(middleAngle),
+        center.dy + imageRadius * sin(middleAngle),
       );
 
-      canvas.save();
-      canvas.translate(textCenter.dx, textCenter.dy);
-      canvas.rotate(middleAngle + pi / 2);
+      final image = images[items[i].emoji]; // Lấy ảnh từ URL
+      if (image != null) {
+        canvas.save();
+        canvas.translate(imageCenter.dx, imageCenter.dy);
+        canvas.rotate(middleAngle + pi / 2);
 
-      final emojiPainter = TextPainter(
-        text: TextSpan(
-          text: items[i].emoji,
-          style: TextStyle(fontSize: 40), // Tăng size lên
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      emojiPainter.layout();
-      emojiPainter.paint(
-        canvas,
-        Offset(-emojiPainter.width / 2, -emojiPainter.height / 2), // Căn giữa
-      );
+        final imageSize = 50.0; // Kích thước ảnh
+        final srcRect = Rect.fromLTWH(
+            0, 0, image.width.toDouble(), image.height.toDouble());
+        final dstRect = Rect.fromCenter(
+          center: Offset.zero,
+          width: imageSize,
+          height: imageSize,
+        );
 
-      // // Vẽ emoji
-      // final emojiPainter = TextPainter(
-      //   text: TextSpan(
-      //     text: items[i].emoji,
-      //     style: TextStyle(fontSize: 32),
-      //   ),
-      //   textDirection: TextDirection.ltr,
-      // );
-      // emojiPainter.layout();
-      // emojiPainter.paint(
-      //   canvas,
-      //   Offset(-emojiPainter.width / 2, -emojiPainter.height - 5),
-      // );
+        canvas.drawImageRect(
+          image,
+          srcRect,
+          dstRect,
+          Paint()..filterQuality = FilterQuality.high,
+        );
 
-      // Vẽ label
-      // final textPainter = TextPainter(
-      //   text: TextSpan(
-      //     text: items[i].label,
-      //     style: TextStyle(
-      //       color: Colors.black,
-      //       fontSize: 12,
-      //       fontWeight: FontWeight.bold,
-      //     ),
-      //   ),
-      //   textAlign: TextAlign.center,
-      //   textDirection: TextDirection.ltr,
-      // );
-      // textPainter.layout();
-      // textPainter.paint(
-      //   canvas,
-      //   Offset(-textPainter.width / 2, 5),
-      // );
-
-      canvas.restore();
+        canvas.restore();
+      }
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(WheelPainter oldDelegate) {
+    return items != oldDelegate.items;
+  }
 }

@@ -298,14 +298,14 @@ class _StreakTabState extends State<StreakTab> {
                   ElevatedButton(
                     onPressed: _checkedInToday ? null : _handleCheckIn,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _checkedInToday
-                          ? Colors.grey
-                          : Colors.orange.shade600,
-                      minimumSize: const Size(double.infinity, 52),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                    ),
+                        backgroundColor: _checkedInToday
+                            ? Colors.grey
+                            : Colors.orange.shade600,
+                        minimumSize: const Size(double.infinity, 52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        elevation: 0),
                     child: Text(
                       _checkedInToday
                           ? 'Đã điểm danh hôm nay'

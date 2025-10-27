@@ -39,6 +39,15 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
+        title: Text(
+          "Khoảnh khắc hôm nay",
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
@@ -81,38 +90,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
             ),
 
             const SizedBox(height: 24),
-
-            // Nút lưu
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  if (title != null && content != null) {
-                    // saveToAlbum(title!, content!);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã lưu vào Thư viện 📖')),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.bookmark_add_outlined,
-                    color: Colors.black),
-                label: const Text(
-                  "Lưu vào Thư viện",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.w600),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.yellow.shade600,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
 
             // Nút xem quảng cáo
             SizedBox(

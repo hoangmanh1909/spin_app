@@ -128,7 +128,7 @@ class _SpinResultDialogState extends State<_SpinResultDialog> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Bạn vừa quay trúng ô:',
+                      'Bạn vừa quay trúng ô',
                       style:
                           const TextStyle(fontSize: 16, color: Colors.black87),
                     ),
