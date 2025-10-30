@@ -68,25 +68,26 @@ class _StreakTabState extends State<StreakTab> {
       );
       return;
     }
+    if (widget.userId != null) {
+      ResponseObject res = await _con.checkin(widget.userId!);
+      if (res.code != "00") {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('❌ Điểm danh thất bại: ${res.message}')),
+          );
+        }
+        return;
+      }
 
-    ResponseObject res = await _con.checkin(widget.userId!);
-    if (res.code != "00") {
+      setState(() {
+        _checkedInToday = true;
+        _streakDays += 1;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Điểm danh thất bại: ${res.message}')),
+          const SnackBar(content: Text('✅ Điểm danh thành công!')),
         );
       }
-      return;
-    }
-
-    setState(() {
-      _checkedInToday = true;
-      _streakDays += 1;
-    });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Điểm danh thành công!')),
-      );
     }
   }
 
@@ -195,32 +196,50 @@ class _StreakTabState extends State<StreakTab> {
           children: [
             // Header user info
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                CircleAvatar(
-                  radius: 34,
-                  backgroundImage: widget.avatarUrl != null
-                      ? NetworkImage(widget.avatarUrl!)
-                      : const AssetImage('assets/img/avatar_placeholder.png')
-                          as ImageProvider,
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Avatar + Info
+                Row(
                   children: [
-                    Text(
-                      widget.userName ?? 'Người chơi bí ẩn',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
+                    CircleAvatar(
+                      radius: 34,
+                      backgroundImage: widget.avatarUrl != null
+                          ? NetworkImage(widget.avatarUrl!)
+                          : const AssetImage(
+                                  'assets/img/avatar_placeholder.png')
+                              as ImageProvider,
                     ),
-                    Text(
-                      'Thành viên trung thành 💫',
-                      style:
-                          TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.userName ?? 'Người chơi bí ẩn',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Text(
+                          'Thành viên trung thành 💫',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
+                ),
+
+                // Nút cài đặt
+                IconButton(
+                  icon:
+                      const Icon(Icons.settings, color: Colors.grey, size: 36),
+                  onPressed: () {
+                    _showSettingSheet(context);
+                  },
                 ),
               ],
             ),
@@ -331,6 +350,126 @@ class _StreakTabState extends State<StreakTab> {
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSettingSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent, // để tạo nền mờ phía sau
+      builder: (_) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Thanh kéo trên cùng
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+
+              const Center(
+                child: Text(
+                  'Cài đặt tài khoản',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Divider(),
+
+              // Các mục chức năng
+              _buildSettingItem(
+                icon: Icons.lock_outline,
+                text: 'Đổi mật khẩu',
+                onTap: () {},
+              ),
+              _buildSettingItem(
+                icon: Icons.support_agent_outlined,
+                text: 'Liên hệ hỗ trợ',
+                onTap: () {},
+              ),
+              _buildSettingItem(
+                icon: Icons.logout,
+                text: 'Đăng xuất',
+                onTap: () {},
+              ),
+              _buildSettingItem(
+                icon: Icons.delete_outline,
+                text: 'Xóa tài khoản',
+                color: Colors.red,
+                onTap: () {},
+              ),
+              const Divider(height: 24),
+
+              // Nút đóng
+              SafeArea(
+                top: false,
+                child: Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'Đóng',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.blue,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSettingItem({
+    required IconData icon,
+    required String text,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: color ?? Colors.black87),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: color ?? Colors.black87,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey, size: 22),
           ],
         ),
       ),
