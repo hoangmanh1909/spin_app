@@ -1,7 +1,11 @@
+// ignore_for_file: no_leading_underscores_for_local_identifiers
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spin_app/controller/process_controller.dart';
+import 'package:spin_app/models/response_object.dart';
 import 'package:spin_app/sreen/auth_sreen.dart';
 import 'package:spin_app/sreen/history_screen.dart';
 import 'package:spin_app/sreen/lucky_wheel_screen.dart';
@@ -17,6 +21,8 @@ class MainView extends StatefulWidget {
 }
 
 class _MainViewState extends State<MainView> {
+  final ProcessController _con = ProcessController();
+
   int _selectedIndex = 0;
   bool _isLoggedIn = false;
   int _spinsLeft = 0;
@@ -29,10 +35,15 @@ class _MainViewState extends State<MainView> {
     _checkUserStatus();
   }
 
-  void _onSpinUpdated(int newCount) {
-    setState(() {
-      _spinsLeft = newCount;
-    });
+  void _onSpinUpdated(int newCount) async {
+    ResponseObject res =
+        await _con.changeNumberOfTurn(userProfile!.id!, newCount);
+
+    if (res.code == "00") {
+      setState(() {
+        _spinsLeft = newCount;
+      });
+    }
   }
 
   void _onLoginTap() async {
@@ -54,7 +65,7 @@ class _MainViewState extends State<MainView> {
 
   Future<void> _checkUserStatus() async {
     SharedPreferences? _prefs = await SharedPreferences.getInstance();
-    String? userMap = _prefs?.getString('user');
+    String? userMap = _prefs.getString('user');
     if (userMap != null) {
       setState(() {
         userProfile = LoginResponse.fromJson(jsonDecode(userMap));
@@ -122,19 +133,10 @@ class _MainViewState extends State<MainView> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const AdmobView(),
+          // const AdmobView(),
           Container(
             decoration: BoxDecoration(
               color: const Color.fromARGB(255, 255, 240, 180),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: ClipRRect(
               borderRadius:

@@ -1,12 +1,18 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spin_app/controller/process_controller.dart';
+import 'package:spin_app/models/get_checkin_streak_response.dart';
+import 'package:spin_app/models/response_object.dart';
 
 class StreakTab extends StatefulWidget {
   final bool isLoggedIn;
   final int initialSpins;
   final String? userName;
   final String? avatarUrl;
+  final int? userId;
   final VoidCallback? onLoginTap;
   final Function(int)? onSpinUpdated;
 
@@ -16,6 +22,7 @@ class StreakTab extends StatefulWidget {
     required this.initialSpins,
     this.userName,
     this.avatarUrl,
+    this.userId,
     this.onLoginTap,
     this.onSpinUpdated,
   }) : super(key: key);
@@ -25,6 +32,7 @@ class StreakTab extends StatefulWidget {
 }
 
 class _StreakTabState extends State<StreakTab> {
+  final ProcessController _con = ProcessController();
   late int _spinsLeft;
   int _streakDays = 0;
   RewardedAd? _rewardedAd;
@@ -40,18 +48,17 @@ class _StreakTabState extends State<StreakTab> {
   }
 
   Future<void> _loadPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final lastCheckin = prefs.getString('last_checkin');
-    final today =
-        DateTime.now().toIso8601String().substring(0, 10); // yyyy-MM-dd
-
-    if (lastCheckin == today) {
-      setState(() => _checkedInToday = true);
+    if (widget.userId == null) return;
+    ResponseObject res = await _con.getCheckinStreak(widget.userId!);
+    if (res.code == "00") {
+      GetCheckinStreakResponse streakRes =
+          GetCheckinStreakResponse.fromJson(jsonDecode(res.data!));
+      setState(() {
+        _streakDays = streakRes.checkinStreak!;
+        _checkedInToday = streakRes.checkDate! == 0 ? false : true;
+        _spinsLeft = streakRes.numberOfTurn!;
+      });
     }
-
-    setState(() {
-      _streakDays = prefs.getInt('streak_days') ?? 0;
-    });
   }
 
   Future<void> _handleCheckIn() async {
@@ -62,20 +69,25 @@ class _StreakTabState extends State<StreakTab> {
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now().toIso8601String().substring(0, 10);
+    ResponseObject res = await _con.checkin(widget.userId!);
+    if (res.code != "00") {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Điểm danh thất bại: ${res.message}')),
+        );
+      }
+      return;
+    }
 
     setState(() {
       _checkedInToday = true;
       _streakDays += 1;
     });
-
-    await prefs.setString('last_checkin', today);
-    await prefs.setInt('streak_days', _streakDays);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✅ Điểm danh thành công!')),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ Điểm danh thành công!')),
+      );
+    }
   }
 
   void _loadRewardedAd() {
