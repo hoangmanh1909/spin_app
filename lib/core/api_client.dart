@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spin_app/models/add_history_request.dart';
 import 'package:spin_app/models/add_user_request.dart';
+import 'package:spin_app/models/change_password_request.dart';
 import 'package:spin_app/models/login_request.dart';
 import 'package:spin_app/models/response_object.dart';
 
@@ -134,6 +135,41 @@ class ApiClient {
           HttpHeaders.authorizationHeader: "Bearer ${await getToken()}",
         }),
       );
+
+      return ResponseObject.fromJson(response.data);
+    } on DioException {
+      ResponseObject responseObject =
+          ResponseObject(code: "98", message: "Không thể kết nối đến máy chủ");
+      return responseObject;
+    }
+  }
+
+  Future<ResponseObject> removeUser(int userId) async {
+    try {
+      Response response = await _dio.get(
+        "${urlGateway}api/Process/RemoveUser?userId=$userId",
+        options: Options(headers: {
+          HttpHeaders.authorizationHeader: "Bearer ${await getToken()}",
+        }),
+      );
+
+      return ResponseObject.fromJson(response.data);
+    } on DioException {
+      ResponseObject responseObject =
+          ResponseObject(code: "98", message: "Không thể kết nối đến máy chủ");
+      return responseObject;
+    }
+  }
+
+  Future<ResponseObject> changePassword(ChangePasswordRequest req) async {
+    try {
+      Response response =
+          await _dio.post("${urlGateway}api/Process/ChangePassword",
+              data: req,
+              options: Options(headers: {
+                HttpHeaders.contentTypeHeader: "application/json",
+                HttpHeaders.authorizationHeader: "Bearer ${await getToken()}",
+              }));
 
       return ResponseObject.fromJson(response.data);
     } on DioException {

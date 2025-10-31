@@ -2,9 +2,11 @@
 
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spin_app/controller/process_controller.dart';
+import 'package:spin_app/models/response_object.dart';
 import 'package:spin_app/sreen/auth_sreen.dart';
 import 'package:spin_app/sreen/history_screen.dart';
 import 'package:spin_app/sreen/lucky_wheel_screen.dart';
@@ -38,6 +40,34 @@ class _MainViewState extends State<MainView> {
       _isLoggedIn = false;
       userProfile = null;
     });
+  }
+
+  void _onRemoveUser() async {
+    ResponseObject resp =
+        await _con.removeUser(userProfile != null ? userProfile!.id : 0);
+    if (resp.code == "00") {
+      SharedPreferences? _prefs = await SharedPreferences.getInstance();
+      await _prefs.remove('user');
+      setState(() {
+        _isLoggedIn = false;
+        userProfile = null;
+      });
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Xoá tài khoản thành công'),
+          ),
+        );
+      }
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Xoá tài khoản thất bại: ${resp.message}'),
+          ),
+        );
+      }
+    }
   }
 
   void _onLoginTap() async {
@@ -96,6 +126,7 @@ class _MainViewState extends State<MainView> {
         isLoggedIn: _isLoggedIn,
         onLoginTap: _onLoginTap,
         onLogoutTap: _onLogout,
+        onRemoveUserTap: _onRemoveUser,
         userId: userProfile?.id,
         userName: userProfile != null ? userProfile!.fullName : "",
       ),

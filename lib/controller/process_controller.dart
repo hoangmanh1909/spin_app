@@ -2,6 +2,7 @@ import 'package:spin_app/core/api_client.dart';
 import 'package:mvc_pattern/mvc_pattern.dart';
 import 'package:spin_app/models/add_history_request.dart';
 import 'package:spin_app/models/add_user_request.dart';
+import 'package:spin_app/models/change_password_request.dart';
 import 'package:spin_app/models/login_request.dart';
 
 class ProcessController extends ControllerMVC {
@@ -40,5 +41,13 @@ class ProcessController extends ControllerMVC {
 
   Future<dynamic> changeNumberOfTurn(userId, numberOfTurn) async {
     return await _apiClient.changeNumberOfTurn(userId, numberOfTurn);
+  }
+
+  Future<dynamic> removeUser(userId) async {
+    return await _apiClient.removeUser(userId);
+  }
+
+  Future<dynamic> changePassword(ChangePasswordRequest req) async {
+    return await _apiClient.changePassword(req);
   }
 }
