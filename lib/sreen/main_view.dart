@@ -5,7 +5,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spin_app/controller/process_controller.dart';
-import 'package:spin_app/models/response_object.dart';
 import 'package:spin_app/sreen/auth_sreen.dart';
 import 'package:spin_app/sreen/history_screen.dart';
 import 'package:spin_app/sreen/lucky_wheel_screen.dart';
@@ -25,7 +24,6 @@ class _MainViewState extends State<MainView> {
 
   int _selectedIndex = 0;
   bool _isLoggedIn = false;
-  int _spinsLeft = 0;
   LoginResponse? userProfile;
 
   @override
@@ -35,15 +33,11 @@ class _MainViewState extends State<MainView> {
     _checkUserStatus();
   }
 
-  void _onSpinUpdated(int newCount) async {
-    ResponseObject res =
-        await _con.changeNumberOfTurn(userProfile!.id!, newCount);
-
-    if (res.code == "00") {
-      setState(() {
-        _spinsLeft = newCount;
-      });
-    }
+  void _onLogout() {
+    setState(() {
+      _isLoggedIn = false;
+      userProfile = null;
+    });
   }
 
   void _onLoginTap() async {
@@ -70,35 +64,14 @@ class _MainViewState extends State<MainView> {
       setState(() {
         userProfile = LoginResponse.fromJson(jsonDecode(userMap));
         _isLoggedIn = true;
-        _spinsLeft = 3;
       });
     }
-  }
-
-  List<BottomNavigationBarItem> _buildButtonBar() {
-    return <BottomNavigationBarItem>[
-      BottomNavigationBarItem(
-        icon: Icon(Icons.home_filled, size: 35),
-        label: 'Trang chủ',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(Icons.photo_album, size: 35),
-        label: 'Thư viện',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(
-          Icons.whatshot_rounded,
-          size: 35,
-        ),
-        label: 'Streak',
-      ),
-    ];
   }
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> _widgetOptions = <Widget>[
-      LuckyWheelScreen(),
+      LuckyWheelScreen(isUserLoggedIn: _isLoggedIn),
       LibraryTab(
         isLoggedIn: _isLoggedIn,
         history: _isLoggedIn
@@ -121,9 +94,9 @@ class _MainViewState extends State<MainView> {
       ),
       StreakTab(
         isLoggedIn: _isLoggedIn,
-        initialSpins: _spinsLeft,
         onLoginTap: _onLoginTap,
-        onSpinUpdated: _onSpinUpdated,
+        onLogoutTap: _onLogout,
+        userId: userProfile?.id,
         userName: userProfile != null ? userProfile!.fullName : "",
       ),
     ];

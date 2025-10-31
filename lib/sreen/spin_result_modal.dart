@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
+import 'package:spin_app/controller/process_controller.dart';
+import 'package:spin_app/models/add_history_request.dart';
+import 'package:spin_app/models/response_object.dart';
 
 class SpinResultModal {
   static Future<void> show(
     BuildContext context, {
     required String slotName,
     String? story, // story có thể null nếu chưa login
+    int? userId,
+    int? itemId,
     required bool isLoggedIn,
     VoidCallback? onLoginTap,
     VoidCallback? onViewDetail,
@@ -27,6 +32,8 @@ class SpinResultModal {
               isLoggedIn: isLoggedIn,
               onLoginTap: onLoginTap,
               onViewDetail: onViewDetail,
+              userId: userId,
+              itemId: itemId,
             ),
           ),
         );
@@ -40,17 +47,19 @@ class _SpinResultDialog extends StatefulWidget {
   final String slotName;
   final String? story;
   final bool isLoggedIn;
+  final int? userId;
   final VoidCallback? onLoginTap;
   final VoidCallback? onViewDetail;
+  final int? itemId;
 
-  const _SpinResultDialog({
-    Key? key,
-    required this.slotName,
-    this.story,
-    required this.isLoggedIn,
-    this.onLoginTap,
-    this.onViewDetail,
-  }) : super(key: key);
+  const _SpinResultDialog(
+      {required this.slotName,
+      this.story,
+      required this.isLoggedIn,
+      this.onLoginTap,
+      this.onViewDetail,
+      this.userId,
+      this.itemId});
 
   @override
   State<_SpinResultDialog> createState() => _SpinResultDialogState();
@@ -58,6 +67,7 @@ class _SpinResultDialog extends StatefulWidget {
 
 class _SpinResultDialogState extends State<_SpinResultDialog> {
   late ConfettiController _confettiController;
+  final ProcessController _processController = ProcessController();
   bool _navigating = false;
   @override
   void initState() {
@@ -71,6 +81,25 @@ class _SpinResultDialogState extends State<_SpinResultDialog> {
   void dispose() {
     _confettiController.dispose();
     super.dispose();
+  }
+
+  addHistory() async {
+    if (widget.isLoggedIn == false) return;
+    AddHistoryRequest addHistoryRequest = AddHistoryRequest(
+      userId: widget.userId!,
+      itemId: widget.itemId!,
+    );
+
+    ResponseObject res = await _processController.addHistory(addHistoryRequest);
+    if (res.code == "00") {
+      // Thành công
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Thêm lịch sử thất bại: ${res.message}')),
+        );
+      }
+    }
   }
 
   @override

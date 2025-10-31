@@ -56,6 +56,7 @@ class _AuthScreenState extends State<AuthScreen>
 
       if (res.code == "00") {
         prefs!.setString('user', res.data!);
+        prefs!.setString('accessToken', res.accessToken!);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

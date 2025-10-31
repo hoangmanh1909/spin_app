@@ -2,30 +2,27 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spin_app/controller/process_controller.dart';
 import 'package:spin_app/models/get_checkin_streak_response.dart';
 import 'package:spin_app/models/response_object.dart';
 
 class StreakTab extends StatefulWidget {
   final bool isLoggedIn;
-  final int initialSpins;
   final String? userName;
   final String? avatarUrl;
   final int? userId;
   final VoidCallback? onLoginTap;
-  final Function(int)? onSpinUpdated;
+  final VoidCallback? onLogoutTap;
 
-  const StreakTab({
-    Key? key,
-    required this.isLoggedIn,
-    required this.initialSpins,
-    this.userName,
-    this.avatarUrl,
-    this.userId,
-    this.onLoginTap,
-    this.onSpinUpdated,
-  }) : super(key: key);
+  const StreakTab(
+      {Key? key,
+      required this.isLoggedIn,
+      this.userName,
+      this.avatarUrl,
+      this.userId,
+      this.onLoginTap,
+      this.onLogoutTap})
+      : super(key: key);
 
   @override
   State<StreakTab> createState() => _StreakTabState();
@@ -33,7 +30,7 @@ class StreakTab extends StatefulWidget {
 
 class _StreakTabState extends State<StreakTab> {
   final ProcessController _con = ProcessController();
-  late int _spinsLeft;
+  int _spinsLeft = 0;
   int _streakDays = 0;
   RewardedAd? _rewardedAd;
   bool _isAdLoading = false;
@@ -42,7 +39,6 @@ class _StreakTabState extends State<StreakTab> {
   @override
   void initState() {
     super.initState();
-    _spinsLeft = widget.initialSpins;
     MobileAds.instance.initialize();
     _loadPrefs();
   }
@@ -57,6 +53,18 @@ class _StreakTabState extends State<StreakTab> {
         _streakDays = streakRes.checkinStreak!;
         _checkedInToday = streakRes.checkDate! == 0 ? false : true;
         _spinsLeft = streakRes.numberOfTurn!;
+      });
+    }
+  }
+
+  void _onSpinUpdated(int newCount) async {
+    if (widget.userId == null) return;
+    ResponseObject res =
+        await _con.changeNumberOfTurn(widget.userId!, newCount);
+
+    if (res.code == "00") {
+      setState(() {
+        _spinsLeft = newCount;
       });
     }
   }
@@ -115,7 +123,7 @@ class _StreakTabState extends State<StreakTab> {
     if (_rewardedAd == null) return;
     _rewardedAd!.show(onUserEarnedReward: (ad, reward) {
       setState(() => _spinsLeft += 1);
-      widget.onSpinUpdated?.call(_spinsLeft);
+      _onSpinUpdated(_spinsLeft);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('🎉 Bạn nhận thêm 1 lượt quay!')),
       );
@@ -411,7 +419,11 @@ class _StreakTabState extends State<StreakTab> {
               _buildSettingItem(
                 icon: Icons.logout,
                 text: 'Đăng xuất',
-                onTap: () {},
+                onTap: () {
+                  Navigator.pop(context);
+
+                  widget.onLogoutTap?.call();
+                },
               ),
               _buildSettingItem(
                 icon: Icons.delete_outline,

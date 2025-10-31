@@ -13,7 +13,12 @@ import 'dart:ui' as ui;
 import 'package:spin_app/utils/image_cache.dart';
 
 class LuckyWheelScreen extends StatefulWidget {
+  const LuckyWheelScreen({super.key, required this.isUserLoggedIn});
+
+  final bool isUserLoggedIn;
+
   @override
+  // ignore: library_private_types_in_public_api
   _LuckyWheelScreenState createState() => _LuckyWheelScreenState();
 }
 
@@ -52,6 +57,8 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
   @override
   void initState() {
     super.initState();
+
+    isUserLoggedIn = widget.isUserLoggedIn;
 
     _controller = AnimationController(
       vsync: this,
@@ -239,7 +246,7 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
   void _showResult(WheelItem item) {
     SpinResultModal.show(
       context,
-      slotName: 'Ô may mắn số 7',
+      slotName: item.label,
       story: storyFromAPI,
       isLoggedIn: isUserLoggedIn,
       onLoginTap: () async {
@@ -250,19 +257,21 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
 
         if (result == true) {
           setState(() => isUserLoggedIn = true);
-          // ✅ Mở lại modal kết quả sau khi login
+
           Future.delayed(const Duration(milliseconds: 300), () {
-            SpinResultModal.show(
-              context,
-              slotName: 'Ô may mắn số 7',
-              story: storyFromAPI,
-              isLoggedIn: true,
-              onViewDetail: () => Navigator.push(
+            if (mounted) {
+              SpinResultModal.show(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => StoryDetailScreen(item: item)),
-              ),
-            );
+                slotName: item.label,
+                story: storyFromAPI,
+                isLoggedIn: true,
+                onViewDetail: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => StoryDetailScreen(item: item)),
+                ),
+              );
+            }
           });
         }
       },
