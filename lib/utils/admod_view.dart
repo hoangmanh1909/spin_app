@@ -6,7 +6,7 @@ class AdmobView extends StatefulWidget {
   const AdmobView({super.key});
 
   // 👉 Dùng ID TEST chính chủ từ Google (an toàn khi dev)
-  static const String androidTestId = 'ca-app-pub-3940256099942544/6300978111';
+  static const String androidTestId = 'ca-app-pub-4615980675698382/1051261781';
   static const String iosTestId = 'ca-app-pub-3940256099942544/2934735716';
 
   @override

@@ -62,10 +62,10 @@ class _StreakTabState extends State<StreakTab> {
 
   void _onSpinUpdated(int newCount) async {
     if (widget.userId == null) return;
-    ResponseObject res =
-        await _con.changeNumberOfTurn(widget.userId!, newCount);
+    ResponseObject res = await _con.changeNumberOfTurn(widget.userId!, 1);
 
     if (res.code == "00") {
+      if (!mounted) return;
       setState(() {
         _spinsLeft = newCount;
       });
@@ -84,7 +84,7 @@ class _StreakTabState extends State<StreakTab> {
       if (res.code != "00") {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('❌ Điểm danh thất bại: ${res.message}')),
+            SnackBar(content: Text('Điểm danh thất bại: ${res.message}')),
           );
         }
         return;
@@ -93,10 +93,11 @@ class _StreakTabState extends State<StreakTab> {
       setState(() {
         _checkedInToday = true;
         _streakDays += 1;
+        _spinsLeft += int.parse(res.data!);
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Điểm danh thành công!')),
+          const SnackBar(content: Text('Điểm danh thành công!')),
         );
       }
     }
@@ -106,7 +107,7 @@ class _StreakTabState extends State<StreakTab> {
     setState(() => _isAdLoading = true);
 
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/5224354917', // test ID
+      adUnitId: 'ca-app-pub-4615980675698382/7581011115',
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
@@ -327,7 +328,7 @@ class _StreakTabState extends State<StreakTab> {
                   ),
                   const SizedBox(height: 12),
                   LinearProgressIndicator(
-                    value: (_streakDays % 7) / 7,
+                    value: (_streakDays % 3) / 3,
                     minHeight: 10,
                     backgroundColor: Colors.grey.shade300,
                     color: Colors.amber[700],

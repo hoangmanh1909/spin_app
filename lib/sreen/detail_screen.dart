@@ -1,35 +1,72 @@
 import 'package:flutter/material.dart';
-import 'package:spin_app/sreen/lucky_wheel_screen.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:spin_app/controller/process_controller.dart';
+import 'package:spin_app/models/response_object.dart';
 
 class StoryDetailScreen extends StatefulWidget {
-  final WheelItem item;
-  const StoryDetailScreen({super.key, required this.item});
+  final String story;
+  final String title;
+  final int? userId;
+  const StoryDetailScreen(
+      {super.key, required this.story, required this.title, this.userId});
 
   @override
   State<StoryDetailScreen> createState() => _StoryDetailScreenState();
 }
 
 class _StoryDetailScreenState extends State<StoryDetailScreen> {
-  String? title;
-  String? content;
   bool loading = true;
-
+  RewardedAd? _rewardedAd;
+  bool _isAdLoading = false;
+  int _spinsLeft = 0;
+  final ProcessController _con = ProcessController();
   @override
   void initState() {
     super.initState();
     loading = false;
-    title = widget.item.label; // hoặc "🌟 Vòng quay Cảm xúc buổi sáng"
-    content = 'Hôm nay có gì đó bất ngờ đang chờ bạn... 🌤️';
-    // _loadStory();
   }
 
-  // Future<void> _loadStory() async {
-  //   setState(() {
-  //     title = story['title'];
-  //     content = story['content'];
-  //     loading = false;
-  //   });
-  // }
+  void _loadRewardedAd() {
+    setState(() => _isAdLoading = true);
+
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-4615980675698382/7581011115',
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedAd = ad;
+          setState(() => _isAdLoading = false);
+          _showRewardedAd();
+        },
+        onAdFailedToLoad: (error) {
+          setState(() => _isAdLoading = false);
+        },
+      ),
+    );
+  }
+
+  void _showRewardedAd() {
+    if (_rewardedAd == null) return;
+    _rewardedAd!.show(onUserEarnedReward: (ad, reward) {
+      setState(() => _spinsLeft += 1);
+      _onSpinUpdated(_spinsLeft);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('🎉 Bạn nhận thêm 1 lượt quay!')),
+      );
+    });
+  }
+
+  void _onSpinUpdated(int newCount) async {
+    if (widget.userId == null) return;
+    ResponseObject res = await _con.changeNumberOfTurn(widget.userId!, 1);
+
+    if (res.code == "00") {
+      if (!mounted) return;
+      setState(() {
+        _spinsLeft = newCount;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +77,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
         title: Text(
-          "Khoảnh khắc hôm nay",
+          "Khoảnh khắc của bạn",
           style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w600,
@@ -67,7 +104,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              title ?? '',
+                              widget.title,
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -76,7 +113,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              content ?? '',
+                              widget.story,
                               style: const TextStyle(
                                 fontSize: 16,
                                 height: 1.6,
@@ -93,24 +130,35 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
 
             // Nút xem quảng cáo
             SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: OutlinedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.play_circle_outline),
-                label: const Text(
-                  "Xem quảng cáo nhận lượt quay",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.black26),
-                  foregroundColor: Colors.black87,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: _isAdLoading ? null : _loadRewardedAd,
+                  icon: _isAdLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.black54,
+                          ),
+                        )
+                      : const Icon(Icons.play_circle_outline),
+                  label: Text(
+                    _isAdLoading
+                        ? "Đang tải quảng cáo..."
+                        : "Xem quảng cáo nhận lượt quay",
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w500),
                   ),
-                ),
-              ),
-            ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.black26),
+                    foregroundColor: Colors.black87,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ))
           ],
         ),
       ),

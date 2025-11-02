@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:spin_app/controller/process_controller.dart';
-import 'package:spin_app/models/add_history_request.dart';
-import 'package:spin_app/models/response_object.dart';
 
 class SpinResultModal {
   static Future<void> show(
     BuildContext context, {
     required String slotName,
-    String? story, // story có thể null nếu chưa login
+    String? story,
     int? userId,
     int? itemId,
+    bool? isSpinLeft,
     required bool isLoggedIn,
     VoidCallback? onLoginTap,
     VoidCallback? onViewDetail,
@@ -34,6 +33,7 @@ class SpinResultModal {
               onViewDetail: onViewDetail,
               userId: userId,
               itemId: itemId,
+              isSpinLeft: isSpinLeft,
             ),
           ),
         );
@@ -48,6 +48,7 @@ class _SpinResultDialog extends StatefulWidget {
   final String? story;
   final bool isLoggedIn;
   final int? userId;
+  final bool? isSpinLeft;
   final VoidCallback? onLoginTap;
   final VoidCallback? onViewDetail;
   final int? itemId;
@@ -59,7 +60,8 @@ class _SpinResultDialog extends StatefulWidget {
       this.onLoginTap,
       this.onViewDetail,
       this.userId,
-      this.itemId});
+      this.itemId,
+      this.isSpinLeft});
 
   @override
   State<_SpinResultDialog> createState() => _SpinResultDialogState();
@@ -81,25 +83,6 @@ class _SpinResultDialogState extends State<_SpinResultDialog> {
   void dispose() {
     _confettiController.dispose();
     super.dispose();
-  }
-
-  addHistory() async {
-    if (widget.isLoggedIn == false) return;
-    AddHistoryRequest addHistoryRequest = AddHistoryRequest(
-      userId: widget.userId!,
-      itemId: widget.itemId!,
-    );
-
-    ResponseObject res = await _processController.addHistory(addHistoryRequest);
-    if (res.code == "00") {
-      // Thành công
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Thêm lịch sử thất bại: ${res.message}')),
-        );
-      }
-    }
   }
 
   @override
@@ -162,6 +145,7 @@ class _SpinResultDialogState extends State<_SpinResultDialog> {
                           const TextStyle(fontSize: 16, color: Colors.black87),
                     ),
                     const SizedBox(height: 6),
+
                     Text(
                       widget.slotName,
                       style: const TextStyle(
@@ -170,6 +154,16 @@ class _SpinResultDialogState extends State<_SpinResultDialog> {
                         color: Colors.black,
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    widget.isSpinLeft == true
+                        ? Text(
+                            'Bạn hết lượt quay rồi 🎯 Đừng quên quay lại điểm danh, xem quảng cáo để nhận thêm lượt nhé!',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                fontSize: 16, color: Colors.deepOrange),
+                          )
+                        : const SizedBox.shrink(),
+
                     const SizedBox(height: 16),
 
                     // story hoặc nhắc đăng nhập

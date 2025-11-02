@@ -2,10 +2,10 @@
 
 import 'dart:convert';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spin_app/controller/process_controller.dart';
+import 'package:spin_app/models/history_response.dart';
 import 'package:spin_app/models/response_object.dart';
 import 'package:spin_app/sreen/auth_sreen.dart';
 import 'package:spin_app/sreen/history_screen.dart';
@@ -27,12 +27,25 @@ class _MainViewState extends State<MainView> {
   int _selectedIndex = 0;
   bool _isLoggedIn = false;
   LoginResponse? userProfile;
+  List<GetHistoryResponse> history = [];
 
   @override
   void initState() {
     super.initState();
     // Giả lập load user
     _checkUserStatus();
+  }
+
+  Future<void> _checkUserStatus() async {
+    SharedPreferences? _prefs = await SharedPreferences.getInstance();
+    String? userMap = _prefs.getString('user');
+    if (userMap != null) {
+      setState(() {
+        userProfile = LoginResponse.fromJson(jsonDecode(userMap));
+        _isLoggedIn = true;
+      });
+      await getHistory();
+    }
   }
 
   void _onLogout() {
@@ -87,42 +100,39 @@ class _MainViewState extends State<MainView> {
     });
   }
 
-  Future<void> _checkUserStatus() async {
-    SharedPreferences? _prefs = await SharedPreferences.getInstance();
-    String? userMap = _prefs.getString('user');
-    if (userMap != null) {
-      setState(() {
-        userProfile = LoginResponse.fromJson(jsonDecode(userMap));
-        _isLoggedIn = true;
-      });
+  void _refreshHistory() async {
+    await getHistory();
+
+    setState(() {});
+  }
+
+  getHistory() async {
+    if (userProfile != null) {
+      var resp = await _con.getHistoryByUser(userProfile!.id);
+      if (resp.code == "00") {
+        history = List<GetHistoryResponse>.from((jsonDecode(resp.data!)
+            .map((model) => GetHistoryResponse.fromJson(model))));
+      }
     }
+    return [];
   }
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> _widgetOptions = <Widget>[
-      LuckyWheelScreen(isUserLoggedIn: _isLoggedIn),
+      LuckyWheelScreen(
+          key: ValueKey(_isLoggedIn),
+          isUserLoggedIn: _isLoggedIn,
+          userId: userProfile?.id,
+          onHistoryAdded: _refreshHistory),
       LibraryTab(
+        key: ValueKey(history.length),
         isLoggedIn: _isLoggedIn,
-        history: _isLoggedIn
-            ? [
-                {
-                  'title': '🌟 Vòng quay “Cảm xúc buổi sáng”',
-                  'content': 'Bạn mở mắt và thấy ánh nắng đầu ngày xuyên qua khung cửa sổ... '
-                      'Một cảm giác bình yên len lỏi trong tâm hồn, khiến bạn mỉm cười nhẹ. '
-                      'Hôm nay là một ngày tuyệt vời để bắt đầu điều gì đó mới!',
-                },
-                {
-                  'title': '🌈 Niềm vui bất ngờ',
-                  'content':
-                      'Bạn không ngờ rằng chỉ một lời chào cũng khiến ai đó vui cả ngày. '
-                          'Một hành động nhỏ, nhưng là một dấu ấn đáng nhớ.',
-                },
-              ]
-            : [],
+        history: history,
         onLoginTap: _onLoginTap,
       ),
       StreakTab(
+        key: ValueKey(_isLoggedIn),
         isLoggedIn: _isLoggedIn,
         onLoginTap: _onLoginTap,
         onLogoutTap: _onLogout,
@@ -137,7 +147,7 @@ class _MainViewState extends State<MainView> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // const AdmobView(),
+          const AdmobView(),
           Container(
             decoration: BoxDecoration(
               color: const Color.fromARGB(255, 255, 240, 180),

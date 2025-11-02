@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:spin_app/models/history_response.dart';
 
 class LibraryTab extends StatelessWidget {
   final bool isLoggedIn;
-  final List<Map<String, String>> history;
+  final List<GetHistoryResponse> history;
   final VoidCallback? onLoginTap;
 
   const LibraryTab({
-    Key? key,
+    super.key,
     required this.isLoggedIn,
     required this.history,
     this.onLoginTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -113,14 +114,14 @@ class LibraryTab extends StatelessWidget {
                     color: Colors.deepOrange, size: 26),
               ),
               title: Text(
-                item['title'] ?? 'Câu chuyện chưa rõ',
+                item.type ?? '',
                 style: const TextStyle(
                     fontWeight: FontWeight.w600, color: Colors.black87),
               ),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 4.0),
                 child: Text(
-                  item['content'] ?? '',
+                  item.content ?? '',
                   style: const TextStyle(fontSize: 15, color: Colors.black87),
                   maxLines: 3, // hiển thị tối đa 3 dòng
                   overflow: TextOverflow.ellipsis, // tự thêm "..." nếu dài
@@ -136,7 +137,7 @@ class LibraryTab extends StatelessWidget {
   }
 
   /// Hiển thị chi tiết story đầy đủ
-  void _showStoryDetail(BuildContext context, Map<String, String> story) {
+  void _showStoryDetail(BuildContext context, GetHistoryResponse story) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -170,7 +171,7 @@ class LibraryTab extends StatelessWidget {
                     size: 40, color: Colors.amber),
                 const SizedBox(height: 12),
                 Text(
-                  story['title'] ?? '',
+                  story.type ?? '',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontSize: 20,
@@ -179,7 +180,7 @@ class LibraryTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  story['content'] ?? '',
+                  story.content ?? '',
                   textAlign: TextAlign.justify,
                   style: const TextStyle(fontSize: 16, color: Colors.black87),
                 ),

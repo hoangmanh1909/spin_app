@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:spin_app/controller/process_controller.dart';
+import 'package:spin_app/models/add_history_request.dart';
+import 'package:spin_app/models/add_history_response.dart';
 import 'package:spin_app/models/response_object.dart';
 import 'package:spin_app/models/spin_config_response.dart';
 import 'package:spin_app/sreen/auth_sreen.dart';
@@ -13,9 +16,14 @@ import 'dart:ui' as ui;
 import 'package:spin_app/utils/image_cache.dart';
 
 class LuckyWheelScreen extends StatefulWidget {
-  const LuckyWheelScreen({super.key, required this.isUserLoggedIn});
-
+  const LuckyWheelScreen(
+      {super.key,
+      required this.isUserLoggedIn,
+      this.userId,
+      this.onHistoryAdded});
+  final VoidCallback? onHistoryAdded;
   final bool isUserLoggedIn;
+  final int? userId;
 
   @override
   // ignore: library_private_types_in_public_api
@@ -41,6 +49,8 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
   bool isUserLoggedIn = false;
   Map<String, ui.Image?> _loadedImages = {}; // ✅ Cache ảnh
   bool _isLoadingImages = true;
+  bool isLoading = false;
+  bool isSpinleft = false;
 
   List<WheelItem> items = [];
 
@@ -243,241 +253,376 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
     });
   }
 
-  void _showResult(WheelItem item) {
-    SpinResultModal.show(
-      context,
-      slotName: item.label,
-      story: storyFromAPI,
-      isLoggedIn: isUserLoggedIn,
-      onLoginTap: () async {
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AuthScreen()),
-        );
-
-        if (result == true) {
-          setState(() => isUserLoggedIn = true);
-
-          Future.delayed(const Duration(milliseconds: 300), () {
-            if (mounted) {
-              SpinResultModal.show(
-                context,
-                slotName: item.label,
-                story: storyFromAPI,
-                isLoggedIn: true,
-                onViewDetail: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => StoryDetailScreen(item: item)),
-                ),
-              );
-            }
-          });
+  addHistory(id) async {
+    AddHistoryRequest req =
+        AddHistoryRequest(userId: widget.userId, itemId: id);
+    ResponseObject res = await _con.addHistory(req);
+    if (res.code == "00") {
+      AddHistoryResponse resData =
+          AddHistoryResponse.fromJson(jsonDecode(res.data!));
+      storyFromAPI = resData.content;
+      if (widget.onHistoryAdded != null) {
+        widget.onHistoryAdded!();
+      }
+    } else {
+      if (res.code == "01") {
+        if (res.data != null) {
+          AddHistoryResponse resData =
+              AddHistoryResponse.fromJson(jsonDecode(res.data!));
+          storyFromAPI = resData.content;
+          if (widget.onHistoryAdded != null) {
+            widget.onHistoryAdded!();
+          }
+        } else {
+          storyFromAPI =
+              "🌟 Một chú mèo nhỏ giúp bà cụ nhặt lá, và trời hôm đó nắng rất đẹp. "
+              "Dù chỉ là một câu chuyện nhỏ, nhưng nó đã làm ấm lòng biết bao người. "
+              "Hãy luôn tin rằng những điều tốt đẹp vẫn luôn tồn tại xung quanh ta!";
         }
-      },
-      onViewDetail: () => Navigator.push(
+
+        isSpinleft = true;
+      } else {
+        storyFromAPI =
+            "🌟 Một chú mèo nhỏ giúp bà cụ nhặt lá, và trời hôm đó nắng rất đẹp. "
+            "Dù chỉ là một câu chuyện nhỏ, nhưng nó đã làm ấm lòng biết bao người. "
+            "Hãy luôn tin rằng những điều tốt đẹp vẫn luôn tồn tại xung quanh ta!";
+      }
+    }
+  }
+
+  void _showResult(WheelItem item) async {
+    if (!mounted) return;
+    if (isUserLoggedIn == false) {
+      storyFromAPI = null;
+    } else {
+      setState(() => isLoading = true);
+
+      await addHistory(item.id);
+      setState(() => isLoading = false);
+    }
+
+    if (mounted) {
+      SpinResultModal.show(
         context,
-        MaterialPageRoute(builder: (_) => StoryDetailScreen(item: item)),
-      ),
-    );
+        slotName: item.label,
+        story: storyFromAPI,
+        isLoggedIn: isUserLoggedIn,
+        isSpinLeft: isSpinleft,
+        onLoginTap: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AuthScreen()),
+          );
+
+          if (result == true) {
+            setState(() => isUserLoggedIn = true);
+
+            addHistory(item.id);
+
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (mounted) {
+                SpinResultModal.show(
+                  context,
+                  slotName: item.label,
+                  story: storyFromAPI,
+                  isLoggedIn: true,
+                  onViewDetail: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => StoryDetailScreen(
+                            userId: widget.userId,
+                            story: storyFromAPI ?? '',
+                            title: item.label)),
+                  ),
+                );
+              }
+            });
+          }
+        },
+        onViewDetail: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => StoryDetailScreen(
+                  userId: widget.userId,
+                  story: storyFromAPI ?? '',
+                  title: item.label)),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 240, 189, 22),
-      body: SingleChildScrollView(
-          child: Container(
-        margin: EdgeInsets.only(top: 50),
-        alignment: AlignmentDirectional.center,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Padding(
-                padding: EdgeInsets.all(10),
-                child: Text(
-                  'VÒNG QUAY CỦA BẠN',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontSize: 28),
-                )),
-            // Vòng quay
-            Stack(
-              alignment: Alignment.center,
+        backgroundColor: const Color.fromARGB(255, 240, 189, 22),
+        body: Stack(children: [
+          SingleChildScrollView(
+              child: Container(
+            height: MediaQuery.of(context).size.height,
+            margin: EdgeInsets.only(top: 50),
+            alignment: AlignmentDirectional.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 600),
-                  child: !_isLoadingImages
-                      ? SizedBox(
-                          width: 320,
-                          height: 320, // ✅ đảm bảo kích thước cố định
-                          child: FadeTransition(
-                            key: const ValueKey("wheel"),
-                            opacity: _fadeAnimation,
-                            child: Transform.rotate(
-                              angle: ((_animation?.value ?? _currentRotation) *
-                                  pi /
-                                  180),
-                              alignment: Alignment.center,
-                              child: CustomPaint(
-                                size: const Size(320, 320),
-                                painter: WheelPainter(
-                                    items: items, images: _loadedImages),
-                              ),
-                            ),
-                          ),
-                        )
-                      : SizedBox(
-                          width: 320,
-                          height: 320, // ✅ giữ chiều cao bằng nhau
-                          child: Column(
-                            key: const ValueKey("loading"),
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              RotationTransition(
-                                turns: Tween(begin: 0.0, end: 1.0).animate(
-                                  CurvedAnimation(
-                                    parent: _controller
-                                      ..repeat(
-                                          period: const Duration(seconds: 3)),
-                                    curve: Curves.linear,
+                Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Text(
+                      'VÒNG QUAY CỦA BẠN',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: 28),
+                    )),
+                // Vòng quay
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 600),
+                      child: !_isLoadingImages
+                          ? SizedBox(
+                              width: 320,
+                              height: 320, // ✅ đảm bảo kích thước cố định
+                              child: FadeTransition(
+                                key: const ValueKey("wheel"),
+                                opacity: _fadeAnimation,
+                                child: Transform.rotate(
+                                  angle:
+                                      ((_animation?.value ?? _currentRotation) *
+                                          pi /
+                                          180),
+                                  alignment: Alignment.center,
+                                  child: CustomPaint(
+                                    size: const Size(320, 320),
+                                    painter: WheelPainter(
+                                        items: items, images: _loadedImages),
                                   ),
                                 ),
-                                child: Container(
-                                  width: 120,
-                                  height: 120,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: SweepGradient(
-                                      colors: [
-                                        Colors.yellowAccent.withOpacity(0.9),
-                                        Colors.orangeAccent,
-                                        Colors.yellowAccent.withOpacity(0.9),
-                                      ],
+                              ),
+                            )
+                          : SizedBox(
+                              width: 320,
+                              height: 320, // ✅ giữ chiều cao bằng nhau
+                              child: Column(
+                                key: const ValueKey("loading"),
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  RotationTransition(
+                                    turns: Tween(begin: 0.0, end: 1.0).animate(
+                                      CurvedAnimation(
+                                        parent: _controller
+                                          ..repeat(
+                                              period:
+                                                  const Duration(seconds: 3)),
+                                        curve: Curves.linear,
+                                      ),
                                     ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(25),
                                     child: Container(
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
+                                      width: 120,
+                                      height: 120,
+                                      decoration: BoxDecoration(
                                         shape: BoxShape.circle,
+                                        gradient: SweepGradient(
+                                          colors: [
+                                            Colors.yellowAccent
+                                                .withOpacity(0.9),
+                                            Colors.orangeAccent,
+                                            Colors.yellowAccent
+                                                .withOpacity(0.9),
+                                          ],
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(25),
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
+                                  const SizedBox(height: 40),
+                                  Text(
+                                    "Đang chuẩn bị vòng quay cho bạn$_dots",
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 40),
-                              Text(
-                                "Đang chuẩn bị vòng quay cho bạn$_dots",
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
+                            ),
+                    ),
+
+                    // Tâm vòng quay (vẫn hiển thị luôn)
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 25,
+                          height: 25,
+                          decoration: const BoxDecoration(
+                            color: Colors.yellow,
+                            shape: BoxShape.circle,
                           ),
                         ),
+                      ),
+                    ),
+
+                    // Mũi tên chỉ
+                    const Positioned(
+                      top: -10,
+                      child: Icon(
+                        Icons.arrow_drop_down,
+                        size: 50,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
                 ),
 
-                // Tâm vòng quay (vẫn hiển thị luôn)
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
+                SizedBox(height: 40),
+
+                // Nút quay
+                ElevatedButton(
+                  onPressed: _isSpinning ? null : _spinWheel,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.shade600,
+                    padding: EdgeInsets.symmetric(horizontal: 60, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 8,
                   ),
-                  child: Center(
-                    child: Container(
-                      width: 25,
-                      height: 25,
-                      decoration: const BoxDecoration(
-                        color: Colors.yellow,
-                        shape: BoxShape.circle,
-                      ),
+                  child: Text(
+                    _isSpinning ? 'ĐANG QUAY...' : 'QUAY NGAY',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ),
+                SizedBox(height: 20),
 
-                // Mũi tên chỉ
-                const Positioned(
-                  top: -10,
-                  child: Icon(
-                    Icons.arrow_drop_down,
-                    size: 50,
-                    color: Colors.red,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.whatshot_rounded,
+                      size: 30,
+                      color: const Color.fromARGB(255, 251, 88, 0),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      "Điểm danh 3 ngày liên tiếp",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                    )
+                  ],
                 ),
+
+                SizedBox(height: 12),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.offline_bolt,
+                      size: 28,
+                      color: const Color.fromARGB(255, 251, 88, 0),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      "1 lượt miễn phí",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                    )
+                  ],
+                ),
+
+                // SizedBox(height: 30),
               ],
             ),
-
-            SizedBox(height: 40),
-
-            // Nút quay
-            ElevatedButton(
-              onPressed: _isSpinning ? null : _spinWheel,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange.shade600,
-                padding: EdgeInsets.symmetric(horizontal: 60, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                elevation: 8,
+          )),
+          if (isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.4),
+                child: _AILoadingView(),
               ),
-              child: Text(
-                _isSpinning ? 'ĐANG QUAY...' : 'QUAY NGAY',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
             ),
-            SizedBox(height: 20),
+        ]));
+  }
+}
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.whatshot_rounded,
-                  size: 30,
-                  color: const Color.fromARGB(255, 251, 88, 0),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  "Điểm danh 3 ngày liên tiếp",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                )
-              ],
+class _AILoadingView extends StatefulWidget {
+  const _AILoadingView();
+
+  @override
+  State<_AILoadingView> createState() => _AILoadingViewState();
+}
+
+class _AILoadingViewState extends State<_AILoadingView> {
+  String _dots = "";
+
+  @override
+  void initState() {
+    super.initState();
+    // hiệu ứng "..." động
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return false;
+      setState(() {
+        if (_dots.length < 3) {
+          _dots += ".";
+        } else {
+          _dots = "";
+        }
+      });
+      return true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 3,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "AI đang viết câu chuyện của bạn$_dots",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
             ),
-
-            SizedBox(height: 12),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.offline_bolt,
-                  size: 28,
-                  color: const Color.fromARGB(255, 251, 88, 0),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  "1 lượt miễn phí",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                )
-              ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Hãy chờ một chút để xem điều bất ngờ ✨",
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
             ),
-
-            SizedBox(height: 30),
-          ],
-        ),
-      )),
+          ),
+        ],
+      ),
     );
   }
 }
