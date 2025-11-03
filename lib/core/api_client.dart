@@ -10,7 +10,7 @@ import 'package:spin_app/models/response_object.dart';
 
 class ApiClient {
   final Dio _dio = Dio();
-  final String urlGateway = "http://202.134.18.27:8005/";
+  final String urlGateway = "https://api-spin.sanbox.io.vn/";
   // final String urlGateway = "http://localhost:5002/";
 
   Future<ResponseObject> getSpinConfig() async {

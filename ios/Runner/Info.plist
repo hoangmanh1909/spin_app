@@ -43,7 +43,15 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-4615980675698382~6085657118</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>NSAllowsArbitraryLoadsInWebContent</key>
+    <true/>
+	<key>NSAllowsLocalNetworking</key>
+    <true/>
+	<key>NSAllowsArbitraryLoads</key>
 	<true/>
 </dict>
 </plist>
