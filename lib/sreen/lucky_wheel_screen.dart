@@ -52,6 +52,7 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
   bool _isLoadingImages = true;
   bool isLoading = false;
   bool isSpinleft = false;
+  bool _isLoaded = false;
 
   List<WheelItem> items = [];
 
@@ -96,7 +97,11 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
       })
       ..repeat();
 
-    Future.microtask(() => _loadSpinConfig());
+    Future.microtask(() async {
+      setState(() => _isLoaded = false);
+      await _loadSpinConfig();
+      if (mounted) setState(() => _isLoaded = true);
+    });
   }
 
   @override
@@ -130,7 +135,7 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
     }
   }
 
-  void _loadSpinConfig() async {
+  _loadSpinConfig() async {
     try {
       final box = await Hive.openBox('spin_cache');
       final cachedData = box.get('spin_items');
@@ -497,18 +502,23 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
 
                 // Nút quay
                 ElevatedButton(
-                  onPressed: _isSpinning ? null : _spinWheel,
+                  onPressed: (!_isLoaded || _isSpinning) ? null : _spinWheel,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange.shade600,
-                    padding: EdgeInsets.symmetric(horizontal: 60, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 60, vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
                     elevation: 8,
                   ),
                   child: Text(
-                    _isSpinning ? 'ĐANG QUAY...' : 'QUAY NGAY',
-                    style: TextStyle(
+                    _isSpinning
+                        ? 'ĐANG QUAY...'
+                        : !_isLoaded
+                            ? 'ĐANG TẢI...'
+                            : 'QUAY NGAY',
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
