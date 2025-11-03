@@ -20,8 +20,10 @@ class LuckyWheelScreen extends StatefulWidget {
       {super.key,
       required this.isUserLoggedIn,
       this.userId,
-      this.onHistoryAdded});
+      this.onHistoryAdded,
+      this.onLoginStateChanged});
   final VoidCallback? onHistoryAdded;
+  final void Function(bool)? onLoginStateChanged;
   final bool isUserLoggedIn;
   final int? userId;
 
@@ -314,11 +316,14 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
             MaterialPageRoute(builder: (_) => const AuthScreen()),
           );
 
-          if (result == true) {
+          if (result == true && mounted) {
             setState(() => isUserLoggedIn = true);
+            widget.onLoginStateChanged?.call(true);
 
-            addHistory(item.id);
-
+            setState(() => isLoading = true);
+            await addHistory(item.id);
+            setState(() => isLoading = false);
+            if (!mounted) return;
             Future.delayed(const Duration(milliseconds: 300), () {
               if (mounted) {
                 SpinResultModal.show(
@@ -445,7 +450,7 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
                                   ),
                                   const SizedBox(height: 40),
                                   Text(
-                                    "Đang chuẩn bị vòng quay cho bạn$_dots",
+                                    "Đang tải vòng quay $_dots",
                                     style: const TextStyle(
                                       fontSize: 18,
                                       color: Colors.white,
