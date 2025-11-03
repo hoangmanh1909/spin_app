@@ -26,7 +26,6 @@ class LuckyWheelScreen extends StatefulWidget {
   final void Function(bool)? onLoginStateChanged;
   final bool isUserLoggedIn;
   final int? userId;
-
   @override
   // ignore: library_private_types_in_public_api
   _LuckyWheelScreenState createState() => _LuckyWheelScreenState();
@@ -320,9 +319,7 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
             setState(() => isUserLoggedIn = true);
             widget.onLoginStateChanged?.call(true);
 
-            setState(() => isLoading = true);
             await addHistory(item.id);
-            setState(() => isLoading = false);
             if (!mounted) return;
             Future.delayed(const Duration(milliseconds: 300), () {
               if (mounted) {

@@ -7,7 +7,7 @@ class AdmobView extends StatefulWidget {
 
   // 👉 Dùng ID TEST chính chủ từ Google (an toàn khi dev)
   static const String androidTestId = 'ca-app-pub-4615980675698382/1051261781';
-  static const String iosTestId = 'ca-app-pub-3940256099942544/2934735716';
+  static const String iosTestId = 'ca-app-pub-4615980675698382/4702748097';
 
   @override
   State<StatefulWidget> createState() => _AdmobViewState();
@@ -68,15 +68,12 @@ class _AdmobViewState extends State<AdmobView> {
     return AnimatedOpacity(
       opacity: _isLoaded ? 1.0 : 0.0,
       duration: const Duration(milliseconds: 400),
-      child: Container(
-        width: double.infinity,
-        color: Colors.transparent,
-        alignment: Alignment.center,
-        child: SafeArea(
-          top: false,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: ClipRect(
           child: SizedBox(
-            height: _bannerAd!.size.height.toDouble(),
             width: _bannerAd!.size.width.toDouble(),
+            height: _bannerAd!.size.height.toDouble(),
             child: AdWidget(ad: _bannerAd!),
           ),
         ),

@@ -125,7 +125,7 @@ class _MainViewState extends State<MainView> {
           isUserLoggedIn: _isLoggedIn,
           userId: userProfile?.id,
           onLoginStateChanged: (bool loggedIn) {
-            setState(() => _isLoggedIn = loggedIn);
+            _checkUserStatus();
           },
           onHistoryAdded: _refreshHistory),
       LibraryTab(
