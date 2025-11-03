@@ -8,6 +8,7 @@ import 'package:spin_app/controller/process_controller.dart';
 import 'package:spin_app/models/history_response.dart';
 import 'package:spin_app/models/response_object.dart';
 import 'package:spin_app/sreen/auth_sreen.dart';
+import 'package:spin_app/sreen/feed_screen.dart';
 import 'package:spin_app/sreen/history_screen.dart';
 import 'package:spin_app/sreen/lucky_wheel_screen.dart';
 import 'package:spin_app/models/login_response.dart';
@@ -134,6 +135,7 @@ class _MainViewState extends State<MainView> {
         history: history,
         onLoginTap: _onLoginTap,
       ),
+      FeedScreen(),
       StreakTab(
         key: ValueKey(_isLoggedIn),
         isLoggedIn: _isLoggedIn,
@@ -180,6 +182,7 @@ class _MainViewState extends State<MainView> {
                 items: [
                   _buildItem(Icons.toys_rounded, "Quay"),
                   _buildItem(Icons.auto_stories_rounded, "Thư viện"),
+                  _buildItem(Icons.public_rounded, "Khám phá"),
                   _buildItem(Icons.stars_rounded, "Streak"),
                 ],
               ),
