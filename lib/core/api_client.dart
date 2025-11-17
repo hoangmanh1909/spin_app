@@ -179,6 +179,40 @@ class ApiClient {
     }
   }
 
+  Future<ResponseObject> getFeeds(int userId, int page, int limit) async {
+    try {
+      Response response = await _dio.get(
+        "${urlGateway}api/Process/GetFeeds?userId=$userId&page=$page&limit=$limit",
+        options: Options(headers: {
+          HttpHeaders.authorizationHeader: "Bearer ${await getToken()}",
+        }),
+      );
+
+      return ResponseObject.fromJson(response.data);
+    } on DioException {
+      ResponseObject responseObject =
+          ResponseObject(code: "98", message: "Không thể kết nối đến máy chủ");
+      return responseObject;
+    }
+  }
+
+  Future<ResponseObject> likeOrDislike(int userId, int feedId) async {
+    try {
+      Response response = await _dio.get(
+        "${urlGateway}api/Process/LikeOrDislike?userId=$userId&feedId=$feedId",
+        options: Options(headers: {
+          HttpHeaders.authorizationHeader: "Bearer ${await getToken()}",
+        }),
+      );
+
+      return ResponseObject.fromJson(response.data);
+    } on DioException {
+      ResponseObject responseObject =
+          ResponseObject(code: "98", message: "Không thể kết nối đến máy chủ");
+      return responseObject;
+    }
+  }
+
   Future<String> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     String? accessToken = prefs.getString('accessToken');

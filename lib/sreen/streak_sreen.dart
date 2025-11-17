@@ -52,11 +52,13 @@ class _StreakTabState extends State<StreakTab> {
     if (res.code == "00") {
       GetCheckinStreakResponse streakRes =
           GetCheckinStreakResponse.fromJson(jsonDecode(res.data!));
-      setState(() {
-        _streakDays = streakRes.checkinStreak!;
-        _checkedInToday = streakRes.checkDate! == 0 ? false : true;
-        _spinsLeft = streakRes.numberOfTurn!;
-      });
+      if (mounted) {
+        setState(() {
+          _streakDays = streakRes.checkinStreak!;
+          _checkedInToday = streakRes.checkDate! == 0 ? false : true;
+          _spinsLeft = streakRes.numberOfTurn!;
+        });
+      }
     }
   }
 

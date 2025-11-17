@@ -50,4 +50,12 @@ class ProcessController extends ControllerMVC {
   Future<dynamic> changePassword(ChangePasswordRequest req) async {
     return await _apiClient.changePassword(req);
   }
+
+  Future<dynamic> getFeeds(int userId, int page, int limit) async {
+    return await _apiClient.getFeeds(userId, page, limit);
+  }
+
+  Future<dynamic> likeOrDislike(int userId, int feedId) async {
+    return await _apiClient.likeOrDislike(userId, feedId);
+  }
 }
