@@ -49,7 +49,9 @@ class _MainViewState extends State<MainView> {
     }
   }
 
-  void _onLogout() {
+  void _onLogout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user');
     setState(() {
       _isLoggedIn = false;
       userProfile = null;

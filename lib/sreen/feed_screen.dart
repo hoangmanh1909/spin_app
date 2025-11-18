@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spin_app/controller/process_controller.dart';
 import 'package:spin_app/models/feed_response.dart';
 import 'package:spin_app/models/login_response.dart';
+import 'package:spin_app/sreen/auth_sreen.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -119,10 +120,67 @@ class _FeedScreenState extends State<FeedScreen> {
     });
   }
 
-  void _openLikedStories() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Đi tới danh sách câu chuyện đã thích ❤️")),
-    );
+  void _openLikedStories() async {
+    if (!_isLoggedIn) {
+      // Chuyển đến Login và chờ kết quả
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
+      // Nếu login thành công (result == true)
+      if (result == true) {
+        await _checkUserStatus(); // load lại user
+        setState(() {});
+      }
+    } else {
+      _fetchFeeds();
+    }
+  }
+
+  Future<void> _onLikeTapped(FeedResponse item) async {
+    // Nếu chưa đăng nhập → chuyển sang Login
+    if (!_isLoggedIn) {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
+      // Nếu login thành công (result == true)
+      if (result == true) {
+        await _checkUserStatus(); // load lại user
+        setState(() {});
+      }
+    }
+
+    // Nếu đã like -> dislike
+    if (item.isCustom == "Y") {
+      var resp = await _con.likeOrDislike(userProfile!.id!, item.id!);
+
+      if (resp.code == "00") {
+        setState(() {
+          item.isCustom = "N";
+          item.likes = (item.likes! - 1).clamp(0, 999999);
+        });
+      } else {
+        _showError("Không thể bỏ thích, thử lại bro!");
+      }
+    }
+    // Nếu chưa like -> like
+    else {
+      var resp = await _con.likeOrDislike(userProfile!.id!, item.id!);
+
+      if (resp.code == "00") {
+        setState(() {
+          item.isCustom = "Y";
+          item.likes = item.likes! + 1;
+        });
+      } else {
+        _showError("Không thể thích câu chuyện, thử lại bro!");
+      }
+    }
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
@@ -268,12 +326,16 @@ class _FeedScreenState extends State<FeedScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      item.isCustom == "Y"
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                      color:
-                          item.isCustom == "Y" ? Colors.red : Colors.grey[600],
+                    GestureDetector(
+                      onTap: () => _onLikeTapped(item),
+                      child: Icon(
+                        item.isCustom == "Y"
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: item.isCustom == "Y"
+                            ? Colors.red
+                            : Colors.grey[600],
+                      ),
                     ),
                     const SizedBox(width: 4),
                     Text(
