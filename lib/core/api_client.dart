@@ -179,10 +179,11 @@ class ApiClient {
     }
   }
 
-  Future<ResponseObject> getFeeds(int userId, int page, int limit) async {
+  Future<ResponseObject> getFeeds(
+      int userId, int likeReadonly, int page, int limit) async {
     try {
       Response response = await _dio.get(
-        "${urlGateway}api/Process/GetFeeds?userId=$userId&page=$page&limit=$limit",
+        "${urlGateway}api/Process/GetFeeds?userId=$userId&likeReadonly=$likeReadonly&page=$page&limit=$limit",
         options: Options(headers: {
           HttpHeaders.authorizationHeader: "Bearer ${await getToken()}",
         }),

@@ -24,7 +24,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
   List<FeedResponse> feeds = []; // dữ liệu gốc
   List<FeedResponse> filteredFeeds = []; // dữ liệu sau khi lọc search
-
+  bool _showLikedOnly = false;
   int _currentPage = 1;
   final int _pageSize = 10;
   bool _isLoadingMore = false;
@@ -77,6 +77,7 @@ class _FeedScreenState extends State<FeedScreen> {
 
     var resp = await _con.getFeeds(
       userProfile?.id ?? 0,
+      _showLikedOnly ? 1 : 0,
       _currentPage,
       _pageSize,
     );
@@ -112,33 +113,50 @@ class _FeedScreenState extends State<FeedScreen> {
   void _searchFeed(String keyword) {
     keyword = keyword.toLowerCase();
 
+    List<FeedResponse> baseList = _showLikedOnly
+        ? feeds
+            .where((item) =>
+                item.isCustom == "Y" && item.userId == userProfile!.id)
+            .toList()
+        : feeds;
+
     setState(() {
       if (keyword.isEmpty) {
-        filteredFeeds = List.from(feeds);
+        filteredFeeds = baseList;
       } else {
-        filteredFeeds = feeds.where((item) {
-          return item.title!.toLowerCase().contains(keyword) ||
-              item.content!.toLowerCase().contains(keyword);
-        }).toList();
+        filteredFeeds = baseList
+            .where((item) =>
+                item.title!.toLowerCase().contains(keyword) ||
+                item.content!.toLowerCase().contains(keyword))
+            .toList();
       }
     });
   }
 
   void _openLikedStories() async {
     if (!_isLoggedIn) {
-      // Chuyển đến Login và chờ kết quả
       final result = await Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const AuthScreen()),
       );
-      // Nếu login thành công (result == true)
+
       if (result == true) {
-        await _checkUserStatus(); // load lại user
-        setState(() {});
+        await _checkUserStatus();
+      } else {
+        return;
       }
-    } else {
-      _fetchFeeds();
     }
+
+    setState(() {
+      _showLikedOnly = !_showLikedOnly;
+
+      if (_showLikedOnly) {
+        // chỉ lọc theo IS_CUSTOM
+        filteredFeeds = feeds.where((item) => item.isCustom == "Y").toList();
+      } else {
+        filteredFeeds = List.from(feeds);
+      }
+    });
   }
 
   Future<void> _onLikeTapped(FeedResponse item) async {
@@ -187,6 +205,28 @@ class _FeedScreenState extends State<FeedScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  void _openWriteStory() async {
+    if (!_isLoggedIn) {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
+
+      if (result == true) {
+        await _checkUserStatus();
+      } else {
+        return;
+      }
+    }
+
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(builder: (_) => const WriteStoryScreen()),
+    // ).then((value) {
+    //   _refreshFeeds();
+    // });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -199,8 +239,9 @@ class _FeedScreenState extends State<FeedScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             children: [
               _buildHeader(),
-              const SizedBox(height: 8),
 
+              _buildWriteStoryCard(),
+              const SizedBox(height: 8),
               // --- Danh sách feed ---
               ...filteredFeeds.map((item) => _buildFeedCard(item)),
 
@@ -230,16 +271,16 @@ class _FeedScreenState extends State<FeedScreen> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
             child: SizedBox(
-              height: 46,
+              height: 40,
               child: TextField(
                 controller: _searchController,
-                onChanged: _searchFeed, // realtime search
+                onChanged: _searchFeed,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
                   hintText: 'Tìm kiếm...',
@@ -258,7 +299,7 @@ class _FeedScreenState extends State<FeedScreen> {
           ),
           const SizedBox(width: 10),
           SizedBox(
-            height: 46,
+            height: 40,
             child: GestureDetector(
               onTap: _openLikedStories,
               child: Container(
@@ -267,16 +308,29 @@ class _FeedScreenState extends State<FeedScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: _showLikedOnly ? Colors.red : Colors.transparent,
+                    width: 1.2, // viền nhẹ để nhấn mạnh trạng thái
+                  ),
                 ),
                 child: Row(
-                  children: const [
-                    Icon(Icons.favorite, color: Colors.red, size: 18),
-                    SizedBox(width: 4),
+                  children: [
+                    Icon(
+                      Icons.favorite,
+                      color: _showLikedOnly
+                          ? Colors.red
+                          : Colors.grey, // 🔥 đổi màu icon
+                      size: 18,
+                    ),
+                    const SizedBox(width: 4),
                     Text(
                       "Đã thích",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
+                        color: _showLikedOnly
+                            ? Colors.red
+                            : Colors.black87, // 🔥 đổi màu text
                       ),
                     ),
                   ],
@@ -285,6 +339,41 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWriteStoryCard() {
+    return GestureDetector(
+      onTap: _openWriteStory,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: Colors.orange,
+              radius: 18,
+              child: Icon(Icons.edit, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              "Viết câu chuyện của bạn...",
+              style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+            )
+          ],
+        ),
       ),
     );
   }
