@@ -35,8 +35,7 @@ class _FeedScreenState extends State<FeedScreen> {
   @override
   void initState() {
     super.initState();
-    _checkUserStatus();
-    _refreshFeeds();
+    _initSetup();
 
     // Lắng nghe scroll để load thêm
     _scrollController.addListener(() {
@@ -45,6 +44,11 @@ class _FeedScreenState extends State<FeedScreen> {
         _loadMore();
       }
     });
+  }
+
+  Future<void> _initSetup() async {
+    await _checkUserStatus(); // 🔥 chờ load user
+    await _refreshFeeds(); // 🔥 sau khi biết có login mới tải feed
   }
 
   Future<void> _checkUserStatus() async {
