@@ -30,7 +30,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     setState(() => _isAdLoading = true);
 
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-4615980675698382/2383706510',
+      adUnitId: 'ca-app-pub-4615980675698382/7581011115',
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {

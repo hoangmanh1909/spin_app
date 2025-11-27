@@ -365,7 +365,7 @@ class _LuckyWheelScreenState extends State<LuckyWheelScreen>
         body: Stack(children: [
           SingleChildScrollView(
               child: Container(
-            height: MediaQuery.of(context).size.height,
+            width: double.infinity,
             margin: EdgeInsets.only(top: 50),
             alignment: AlignmentDirectional.center,
             child: Column(

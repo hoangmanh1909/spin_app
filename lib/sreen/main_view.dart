@@ -52,9 +52,11 @@ class _MainViewState extends State<MainView> {
   void _onLogout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('user');
+    await prefs.remove('accessToken');
     setState(() {
       _isLoggedIn = false;
       userProfile = null;
+      history = [];
     });
   }
 
@@ -64,9 +66,11 @@ class _MainViewState extends State<MainView> {
     if (resp.code == "00") {
       SharedPreferences? _prefs = await SharedPreferences.getInstance();
       await _prefs.remove('user');
+      await _prefs.remove('accessToken');
       setState(() {
         _isLoggedIn = false;
         userProfile = null;
+        history = [];
       });
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -109,15 +113,19 @@ class _MainViewState extends State<MainView> {
     setState(() {});
   }
 
-  getHistory() async {
+  Future<void> getHistory() async {
     if (userProfile != null) {
       var resp = await _con.getHistoryByUser(userProfile!.id);
+
       if (resp.code == "00") {
-        history = List<GetHistoryResponse>.from((jsonDecode(resp.data!)
-            .map((model) => GetHistoryResponse.fromJson(model))));
+        setState(() {
+          history = List<GetHistoryResponse>.from(
+            jsonDecode(resp.data!)
+                .map((model) => GetHistoryResponse.fromJson(model)),
+          );
+        });
       }
     }
-    return [];
   }
 
   @override
@@ -154,7 +162,7 @@ class _MainViewState extends State<MainView> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const AdmobView(),
+          // const AdmobView(),
           Container(
             decoration: BoxDecoration(
               color: const Color.fromARGB(255, 255, 240, 180),

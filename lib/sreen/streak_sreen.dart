@@ -109,7 +109,7 @@ class _StreakTabState extends State<StreakTab> {
     setState(() => _isAdLoading = true);
 
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-4615980675698382/2383706510',
+      adUnitId: 'ca-app-pub-4615980675698382/7581011115',
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
@@ -235,7 +235,7 @@ class _StreakTabState extends State<StreakTab> {
                           ),
                         ),
                         Text(
-                          'Thành viên trung thành 💫',
+                          'Chào một ngày mới thật rực rỡ 🌈',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade700,
@@ -515,161 +515,164 @@ class _StreakTabState extends State<StreakTab> {
         return GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           child: Container(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 16,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-            ),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 10,
-                  offset: Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 5,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(10),
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, -2),
                   ),
-                ),
-                const Text(
-                  'Đổi mật khẩu',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: currentController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    labelText: 'Mật khẩu hiện tại',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: newController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.lock),
-                    labelText: 'Mật khẩu mới',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: confirmController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.check_circle_outline),
-                    labelText: 'Xác nhận mật khẩu mới',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orangeAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 5,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    onPressed: () async {
-                      final current = currentController.text.trim();
-                      final newPass = newController.text.trim();
-                      final confirm = confirmController.text.trim();
-
-                      if (current.isEmpty ||
-                          newPass.isEmpty ||
-                          confirm.isEmpty) {
-                        ScaffoldMessenger.of(parentContext).showSnackBar(
-                          const SnackBar(
-                            content: Text('Vui lòng nhập đầy đủ thông tin'),
+                    const Text(
+                      'Đổi mật khẩu',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: currentController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        labelText: 'Mật khẩu hiện tại',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: newController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.lock),
+                        labelText: 'Mật khẩu mới',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: confirmController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.check_circle_outline),
+                        labelText: 'Xác nhận mật khẩu mới',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orangeAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        );
-                        return;
-                      }
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: () async {
+                          final current = currentController.text.trim();
+                          final newPass = newController.text.trim();
+                          final confirm = confirmController.text.trim();
 
-                      if (newPass != confirm) {
-                        ScaffoldMessenger.of(parentContext).showSnackBar(
-                          const SnackBar(
-                            content: Text('Mật khẩu xác nhận không khớp'),
-                          ),
-                        );
-                        return;
-                      }
-
-                      if (widget.userId != null) {
-                        ChangePasswordRequest req = ChangePasswordRequest(
-                          id: widget.userId!,
-                          currentPassword: current,
-                          newPassword: confirm,
-                        );
-                        ResponseObject res = await _con.changePassword(req);
-
-                        if (res.code != "00") {
-                          if (mounted) {
-                            Flushbar(
-                              message: 'Đổi mật khẩu thất bại: ${res.message}',
-                              backgroundColor: Colors.redAccent,
-                              duration: const Duration(seconds: 4),
-                              margin: const EdgeInsets.all(8),
-                              borderRadius: BorderRadius.circular(12),
-                            ).show(context);
-                          }
-                        } else {
-                          if (mounted) {
-                            Navigator.pop(context);
+                          if (current.isEmpty ||
+                              newPass.isEmpty ||
+                              confirm.isEmpty) {
                             ScaffoldMessenger.of(parentContext).showSnackBar(
                               const SnackBar(
-                                content: Text('Đổi mật khẩu thành công!'),
+                                content: Text('Vui lòng nhập đầy đủ thông tin'),
                               ),
                             );
+                            return;
                           }
-                        }
-                      }
-                    },
-                    child: const Text(
-                      'Lưu thay đổi',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+
+                          if (newPass != confirm) {
+                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                              const SnackBar(
+                                content: Text('Mật khẩu xác nhận không khớp'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (widget.userId != null) {
+                            ChangePasswordRequest req = ChangePasswordRequest(
+                              id: widget.userId!,
+                              currentPassword: current,
+                              newPassword: confirm,
+                            );
+                            ResponseObject res = await _con.changePassword(req);
+
+                            if (res.code != "00") {
+                              if (mounted) {
+                                Flushbar(
+                                  message:
+                                      'Đổi mật khẩu thất bại: ${res.message}',
+                                  backgroundColor: Colors.redAccent,
+                                  duration: const Duration(seconds: 4),
+                                  margin: const EdgeInsets.all(8),
+                                  borderRadius: BorderRadius.circular(12),
+                                ).show(context);
+                              }
+                            } else {
+                              if (mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(parentContext)
+                                    .showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Đổi mật khẩu thành công!'),
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        child: const Text(
+                          'Lưu thay đổi',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Hủy',
+                        style: TextStyle(fontSize: 16, color: Colors.blue),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Hủy',
-                    style: TextStyle(fontSize: 16, color: Colors.blue),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              )),
         );
       },
     );

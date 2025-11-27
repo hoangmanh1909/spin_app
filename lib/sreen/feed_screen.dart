@@ -7,6 +7,7 @@ import 'package:spin_app/controller/process_controller.dart';
 import 'package:spin_app/models/feed_response.dart';
 import 'package:spin_app/models/login_response.dart';
 import 'package:spin_app/sreen/auth_sreen.dart';
+import 'package:spin_app/sreen/write_story_screen.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -218,13 +219,13 @@ class _FeedScreenState extends State<FeedScreen> {
         return;
       }
     }
-
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (_) => const WriteStoryScreen()),
-    // ).then((value) {
-    //   _refreshFeeds();
-    // });
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const WriteStoryScreen()),
+    ).then((value) {
+      _refreshFeeds();
+    });
   }
 
   @override
