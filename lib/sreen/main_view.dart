@@ -145,7 +145,9 @@ class _MainViewState extends State<MainView> {
         history: history,
         onLoginTap: _onLoginTap,
       ),
-      FeedScreen(),
+      FeedScreen(
+        onHistoryAdded: _refreshHistory,
+      ),
       StreakTab(
         key: ValueKey(_isLoggedIn),
         isLoggedIn: _isLoggedIn,

@@ -10,8 +10,8 @@ import 'package:spin_app/sreen/auth_sreen.dart';
 import 'package:spin_app/sreen/write_story_screen.dart';
 
 class FeedScreen extends StatefulWidget {
-  const FeedScreen({super.key});
-
+  const FeedScreen({super.key, this.onHistoryAdded});
+  final Function()? onHistoryAdded;
   @override
   State<FeedScreen> createState() => _FeedScreenState();
 }
@@ -222,7 +222,11 @@ class _FeedScreenState extends State<FeedScreen> {
     if (!mounted) return;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const WriteStoryScreen()),
+      MaterialPageRoute(
+          builder: (_) => WriteStoryScreen(
+                userId: userProfile!.id!,
+                onHistoryAdded: widget.onHistoryAdded,
+              )),
     ).then((value) {
       _refreshFeeds();
     });

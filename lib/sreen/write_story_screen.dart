@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:spin_app/controller/process_controller.dart';
+import 'package:spin_app/models/add_history_request.dart';
+import 'package:spin_app/models/response_object.dart';
 
 class WriteStoryScreen extends StatefulWidget {
-  final Function({
-    required String title,
-    required String content,
-    required bool shareToExplore,
-  })? onSubmit;
-
-  const WriteStoryScreen({super.key, this.onSubmit});
-
+  const WriteStoryScreen(
+      {super.key, required this.userId, this.onHistoryAdded});
+  final int? userId;
+  final Function()? onHistoryAdded;
   @override
   State<WriteStoryScreen> createState() => _WriteStoryScreenState();
 }
 
 class _WriteStoryScreenState extends State<WriteStoryScreen> {
+  final ProcessController processController = ProcessController();
   final TextEditingController _title = TextEditingController();
   final TextEditingController _content = TextEditingController();
 
@@ -23,20 +23,31 @@ class _WriteStoryScreenState extends State<WriteStoryScreen> {
   void _submit() async {
     if (_title.text.trim().isEmpty || _content.text.trim().isEmpty) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Nhập đầy đủ nội dung")));
+          .showSnackBar(const SnackBar(content: Text("Bạn hãy nhập nội dung")));
       return;
     }
 
     setState(() => submitting = true);
 
-    await widget.onSubmit?.call(
-      title: _title.text.trim(),
-      content: _content.text.trim(),
-      shareToExplore: shareToExplore,
+    ResponseObject res = await processController.addHistory(
+      AddHistoryRequest(
+        userId: widget.userId,
+        title: _title.text.trim(),
+        content: _content.text.trim(),
+        feedStatus: shareToExplore ? "P" : "L",
+      ),
     );
 
-    if (!mounted) return;
-    Navigator.pop(context);
+    if (res.code != "00") {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res.message ?? "Đã có lỗi xảy ra")));
+      setState(() => submitting = false);
+      return;
+    }
+    if (widget.onHistoryAdded != null) {
+      widget.onHistoryAdded!();
+    }
   }
 
   @override
