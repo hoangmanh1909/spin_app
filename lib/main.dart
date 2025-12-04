@@ -7,6 +7,7 @@ import 'package:spin_app/sreen/main_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // await AppTrackingTransparency.requestTrackingAuthorization();
   unawaited(MobileAds.instance.initialize());
   await Hive.initFlutter();
   runApp(const MyApp());
