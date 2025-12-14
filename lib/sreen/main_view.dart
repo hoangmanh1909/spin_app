@@ -164,7 +164,7 @@ class _MainViewState extends State<MainView> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // const AdmobView(),
+          const AdmobView(),
           Container(
             decoration: BoxDecoration(
               color: const Color.fromARGB(255, 255, 240, 180),

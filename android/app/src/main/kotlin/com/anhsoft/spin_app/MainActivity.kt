@@ -1,4 +1,4 @@
-package com.ngocsoft.spin_app
+package com.anhsoft.spin_app
 
 import io.flutter.embedding.android.FlutterActivity
 
