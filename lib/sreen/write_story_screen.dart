@@ -29,7 +29,7 @@ class _WriteStoryScreenState extends State<WriteStoryScreen> {
 
     setState(() => submitting = true);
 
-    ResponseObject res = await processController.addHistory(
+    ResponseObject res = await processController.addFeed(
       AddHistoryRequest(
         userId: widget.userId,
         title: _title.text.trim(),
@@ -37,17 +37,35 @@ class _WriteStoryScreenState extends State<WriteStoryScreen> {
         feedStatus: shareToExplore ? "P" : "L",
       ),
     );
+    if (!mounted) return;
 
-    if (res.code != "00") {
-      if (!mounted) return;
+    if (res.code != "00" && res.code != "07") {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res.message ?? "Đã có lỗi xảy ra")));
+        SnackBar(content: Text(res.message ?? "Có lỗi xảy ra")),
+      );
       setState(() => submitting = false);
       return;
     }
-    if (widget.onHistoryAdded != null) {
-      widget.onHistoryAdded!();
-    }
+
+    final bool isPending = res.code == "07";
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isPending
+              ? "Bài viết đã được lưu và đang chờ duyệt trước khi hiển thị công khai."
+              : "Đã đăng thành công",
+        ),
+      ),
+    );
+
+    setState(() => submitting = false);
+
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
+
+    widget.onHistoryAdded?.call();
+    Navigator.pop(context);
   }
 
   @override

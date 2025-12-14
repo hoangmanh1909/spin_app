@@ -6,7 +6,11 @@ class AddHistoryRequest {
   String? feedStatus;
 
   AddHistoryRequest(
-      {this.userId, this.itemId, this.title, this.content, this.feedStatus});
+      {this.userId,
+      this.itemId = 0,
+      this.title,
+      this.content,
+      this.feedStatus});
 
   AddHistoryRequest.fromJson(Map<String, dynamic> json) {
     userId = json['UserId'];

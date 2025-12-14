@@ -31,6 +31,10 @@ class ProcessController extends ControllerMVC {
     return await _apiClient.addHistory(req);
   }
 
+  Future<dynamic> addFeed(AddHistoryRequest req) async {
+    return await _apiClient.addFeed(req);
+  }
+
   Future<dynamic> checkin(userId) async {
     return await _apiClient.checkin(userId);
   }

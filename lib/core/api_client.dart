@@ -75,6 +75,58 @@ class ApiClient {
     }
   }
 
+  Future<ResponseObject> addFeed(AddHistoryRequest req) async {
+    try {
+      Response response = await _dio.post("${urlGateway}api/Feed/AddFeed",
+          data: req,
+          options: Options(headers: {
+            HttpHeaders.contentTypeHeader: "application/json",
+            HttpHeaders.authorizationHeader: "Bearer ${await getToken()}",
+          }));
+
+      return ResponseObject.fromJson(response.data);
+    } on DioException catch (e) {
+      // ❌ Không có response → lỗi mạng
+      if (e.response == null) {
+        return ResponseObject(
+          code: "98",
+          message: "Không thể kết nối đến máy chủ",
+        );
+      }
+
+      // ✅ Có response từ server
+      final statusCode = e.response?.statusCode;
+      final data = e.response?.data;
+
+      // 🔐 Token hết hạn
+      if (statusCode == 401) {
+        return ResponseObject(
+          code: "401",
+          message: "Phiên đăng nhập đã hết hạn",
+        );
+      }
+
+      // ❌ Lỗi validate / nghiệp vụ backend
+      if (statusCode == 400) {
+        return ResponseObject.fromJson(data);
+      }
+
+      // 💥 Lỗi server
+      if (statusCode == 500) {
+        return ResponseObject(
+          code: "500",
+          message: "Lỗi hệ thống, vui lòng thử lại sau",
+        );
+      }
+
+      // ❓ Trường hợp còn lại
+      return ResponseObject(
+        code: statusCode?.toString() ?? "99",
+        message: data?["message"] ?? "Có lỗi xảy ra",
+      );
+    }
+  }
+
   Future<ResponseObject> getHistoryByUser(int userId) async {
     try {
       Response response = await _dio.get(
