@@ -109,7 +109,11 @@ class _StreakTabState extends State<StreakTab> {
     setState(() => _isAdLoading = true);
 
     RewardedAd.load(
+<<<<<<< HEAD
       adUnitId: 'ca-app-pub-4615980675698382/7581011115',
+=======
+      adUnitId: 'ca-app-pub-4615980675698382/3961517652', // ID thật của bro
+>>>>>>> 09fa4ea (1)
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
@@ -119,20 +123,49 @@ class _StreakTabState extends State<StreakTab> {
         },
         onAdFailedToLoad: (error) {
           setState(() => _isAdLoading = false);
+          _showAdFailedPopup();
         },
       ),
     );
   }
 
   void _showRewardedAd() {
-    if (_rewardedAd == null) return;
-    _rewardedAd!.show(onUserEarnedReward: (ad, reward) {
-      setState(() => _spinsLeft += 1);
-      _onSpinUpdated(_spinsLeft);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🎉 Bạn nhận thêm 1 lượt quay!')),
-      );
-    });
+    if (_rewardedAd == null) {
+      _showAdFailedPopup();
+      return;
+    }
+
+    _rewardedAd!.show(
+      onUserEarnedReward: (ad, reward) {
+        setState(() => _spinsLeft += 1);
+        _onSpinUpdated(_spinsLeft);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('🎉 Bạn nhận thêm 1 lượt quay!')),
+        );
+      },
+    );
+  }
+
+  void _showAdFailedPopup() {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Quảng cáo chưa sẵn sàng"),
+          content: const Text(
+            "Hiện tại không có quảng cáo nào để hiển thị. Tính năng vẫn khả dụng, nhưng quảng cáo có thể xuất hiện không thường xuyên.",
+            style: TextStyle(fontSize: 15),
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Đóng"),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -288,27 +321,27 @@ class _StreakTabState extends State<StreakTab> {
                       color: Colors.amber,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    onPressed: _isAdLoading ? null : _loadRewardedAd,
-                    icon: const Icon(Icons.ondemand_video, color: Colors.white),
-                    label: Text(
-                      _isAdLoading
-                          ? 'Đang tải quảng cáo...'
-                          : 'Xem để nhận thêm lượt quay',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange.shade600,
-                      minimumSize: const Size(double.infinity, 52),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                      elevation: 0,
-                      textStyle: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                  ),
+                  // const SizedBox(height: 12),
+                  // ElevatedButton.icon(
+                  //   onPressed: _isAdLoading ? null : _loadRewardedAd,
+                  //   icon: const Icon(Icons.ondemand_video, color: Colors.white),
+                  //   label: Text(
+                  //     _isAdLoading
+                  //         ? 'Đang tải quảng cáo...'
+                  //         : 'Xem để nhận thêm lượt quay',
+                  //     style: const TextStyle(color: Colors.white),
+                  //   ),
+                  //   style: ElevatedButton.styleFrom(
+                  //     backgroundColor: Colors.orange.shade600,
+                  //     minimumSize: const Size(double.infinity, 52),
+                  //     shape: RoundedRectangleBorder(
+                  //       borderRadius: BorderRadius.circular(28),
+                  //     ),
+                  //     elevation: 0,
+                  //     textStyle: const TextStyle(
+                  //         fontSize: 16, fontWeight: FontWeight.w600),
+                  //   ),
+                  // ),
                 ],
               ),
             ),

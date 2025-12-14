@@ -30,7 +30,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     setState(() => _isAdLoading = true);
 
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-4615980675698382/7581011115',
+      adUnitId: 'ca-app-pub-4615980675698382/3961517652', // ID thật của bro
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
@@ -40,20 +40,28 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         },
         onAdFailedToLoad: (error) {
           setState(() => _isAdLoading = false);
+          _showAdFailedPopup();
         },
       ),
     );
   }
 
   void _showRewardedAd() {
-    if (_rewardedAd == null) return;
-    _rewardedAd!.show(onUserEarnedReward: (ad, reward) {
-      setState(() => _spinsLeft += 1);
-      _onSpinUpdated(_spinsLeft);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🎉 Bạn nhận thêm 1 lượt quay!')),
-      );
-    });
+    if (_rewardedAd == null) {
+      _showAdFailedPopup();
+      return;
+    }
+
+    _rewardedAd!.show(
+      onUserEarnedReward: (ad, reward) {
+        setState(() => _spinsLeft += 1);
+        _onSpinUpdated(_spinsLeft);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('🎉 Bạn nhận thêm 1 lượt quay!')),
+        );
+      },
+    );
   }
 
   void _onSpinUpdated(int newCount) async {
@@ -66,6 +74,27 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
         _spinsLeft = newCount;
       });
     }
+  }
+
+  void _showAdFailedPopup() {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Quảng cáo chưa sẵn sàng"),
+          content: const Text(
+            "Hiện tại không có quảng cáo nào để hiển thị. Tính năng vẫn khả dụng, nhưng quảng cáo có thể xuất hiện không thường xuyên.",
+            style: TextStyle(fontSize: 15),
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Đóng"),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -126,39 +155,39 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            // const SizedBox(height: 24),
 
-            // Nút xem quảng cáo
-            SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton.icon(
-                  onPressed: _isAdLoading ? null : _loadRewardedAd,
-                  icon: _isAdLoading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.black54,
-                          ),
-                        )
-                      : const Icon(Icons.play_circle_outline),
-                  label: Text(
-                    _isAdLoading
-                        ? "Đang tải quảng cáo..."
-                        : "Xem quảng cáo nhận lượt quay",
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w500),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.black26),
-                    foregroundColor: Colors.black87,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                ))
+            // // Nút xem quảng cáo
+            // SizedBox(
+            //     width: double.infinity,
+            //     height: 52,
+            //     child: OutlinedButton.icon(
+            //       onPressed: _isAdLoading ? null : _loadRewardedAd,
+            //       icon: _isAdLoading
+            //           ? const SizedBox(
+            //               width: 22,
+            //               height: 22,
+            //               child: CircularProgressIndicator(
+            //                 strokeWidth: 2.5,
+            //                 color: Colors.black54,
+            //               ),
+            //             )
+            //           : const Icon(Icons.play_circle_outline),
+            //       label: Text(
+            //         _isAdLoading
+            //             ? "Đang tải quảng cáo..."
+            //             : "Xem quảng cáo nhận lượt quay",
+            //         style: const TextStyle(
+            //             fontSize: 15, fontWeight: FontWeight.w500),
+            //       ),
+            //       style: OutlinedButton.styleFrom(
+            //         side: const BorderSide(color: Colors.black26),
+            //         foregroundColor: Colors.black87,
+            //         shape: RoundedRectangleBorder(
+            //           borderRadius: BorderRadius.circular(30),
+            //         ),
+            //       ),
+            //     ))
           ],
         ),
       ),
