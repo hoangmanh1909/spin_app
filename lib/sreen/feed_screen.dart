@@ -245,7 +245,7 @@ class _FeedScreenState extends State<FeedScreen> {
             children: [
               _buildHeader(),
 
-              // _buildWriteStoryCard(),
+              _buildWriteStoryCard(),
               const SizedBox(height: 8),
               // --- Danh sách feed ---
               ...filteredFeeds.map((item) => _buildFeedCard(item)),
