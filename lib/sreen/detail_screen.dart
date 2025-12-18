@@ -7,6 +7,7 @@ class StoryDetailScreen extends StatefulWidget {
   final String story;
   final String title;
   final int? userId;
+
   const StoryDetailScreen(
       {super.key, required this.story, required this.title, this.userId});
 
@@ -19,11 +20,41 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
   RewardedAd? _rewardedAd;
   bool _isAdLoading = false;
   int _spinsLeft = 0;
+  bool _isAdReady = false;
   final ProcessController _con = ProcessController();
   @override
   void initState() {
     super.initState();
     loading = false;
+    _preloadRewardedAd();
+  }
+
+  void _preloadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-4615980675698382/3961517652',
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedAd = ad;
+          _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _isAdReady = false;
+              _preloadRewardedAd(); // load lại cho lần sau
+            },
+          );
+
+          if (mounted) {
+            setState(() => _isAdReady = true);
+          }
+        },
+        onAdFailedToLoad: (_) {
+          if (mounted) {
+            setState(() => _isAdReady = false);
+          }
+        },
+      ),
+    );
   }
 
   void _loadRewardedAd() {
@@ -155,39 +186,40 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
               ),
             ),
 
-            // const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-            // // Nút xem quảng cáo
-            // SizedBox(
-            //     width: double.infinity,
-            //     height: 52,
-            //     child: OutlinedButton.icon(
-            //       onPressed: _isAdLoading ? null : _loadRewardedAd,
-            //       icon: _isAdLoading
-            //           ? const SizedBox(
-            //               width: 22,
-            //               height: 22,
-            //               child: CircularProgressIndicator(
-            //                 strokeWidth: 2.5,
-            //                 color: Colors.black54,
-            //               ),
-            //             )
-            //           : const Icon(Icons.play_circle_outline),
-            //       label: Text(
-            //         _isAdLoading
-            //             ? "Đang tải quảng cáo..."
-            //             : "Xem quảng cáo nhận lượt quay",
-            //         style: const TextStyle(
-            //             fontSize: 15, fontWeight: FontWeight.w500),
-            //       ),
-            //       style: OutlinedButton.styleFrom(
-            //         side: const BorderSide(color: Colors.black26),
-            //         foregroundColor: Colors.black87,
-            //         shape: RoundedRectangleBorder(
-            //           borderRadius: BorderRadius.circular(30),
-            //         ),
-            //       ),
-            //     ))
+            // Nút xem quảng cáo
+            if (_isAdReady)
+              SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed: _isAdLoading ? null : _loadRewardedAd,
+                    icon: _isAdLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.black54,
+                            ),
+                          )
+                        : const Icon(Icons.play_circle_outline),
+                    label: Text(
+                      _isAdLoading
+                          ? "Đang tải quảng cáo..."
+                          : "Xem quảng cáo nhận lượt quay",
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w500),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.black26),
+                      foregroundColor: Colors.black87,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ))
           ],
         ),
       ),

@@ -38,12 +38,13 @@ class _StreakTabState extends State<StreakTab> {
   RewardedAd? _rewardedAd;
   bool _isAdLoading = false;
   bool _checkedInToday = false;
-
+  bool _isAdReady = false;
   @override
   void initState() {
     super.initState();
     MobileAds.instance.initialize();
     _loadPrefs();
+    _preloadRewardedAd();
   }
 
   Future<void> _loadPrefs() async {
@@ -105,11 +106,39 @@ class _StreakTabState extends State<StreakTab> {
     }
   }
 
+  void _preloadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-4615980675698382/3961517652',
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          _rewardedAd = ad;
+          _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _isAdReady = false;
+              _preloadRewardedAd(); // load lại cho lần sau
+            },
+          );
+
+          if (mounted) {
+            setState(() => _isAdReady = true);
+          }
+        },
+        onAdFailedToLoad: (_) {
+          if (mounted) {
+            setState(() => _isAdReady = false);
+          }
+        },
+      ),
+    );
+  }
+
   void _loadRewardedAd() {
     setState(() => _isAdLoading = true);
 
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-4615980675698382/7581011115',
+      adUnitId: 'ca-app-pub-4615980675698382/3961517652',
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
@@ -318,26 +347,28 @@ class _StreakTabState extends State<StreakTab> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    onPressed: _isAdLoading ? null : _loadRewardedAd,
-                    icon: const Icon(Icons.ondemand_video, color: Colors.white),
-                    label: Text(
-                      _isAdLoading
-                          ? 'Đang tải quảng cáo...'
-                          : 'Xem để nhận thêm lượt quay',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange.shade600,
-                      minimumSize: const Size(double.infinity, 52),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
+                  if (_isAdReady)
+                    ElevatedButton.icon(
+                      onPressed: _isAdLoading ? null : _loadRewardedAd,
+                      icon:
+                          const Icon(Icons.ondemand_video, color: Colors.white),
+                      label: Text(
+                        _isAdLoading
+                            ? 'Đang tải quảng cáo...'
+                            : 'Xem để nhận thêm lượt quay',
+                        style: const TextStyle(color: Colors.white),
                       ),
-                      elevation: 0,
-                      textStyle: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                  ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade600,
+                        minimumSize: const Size(double.infinity, 52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        elevation: 0,
+                        textStyle: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    )
                 ],
               ),
             ),
