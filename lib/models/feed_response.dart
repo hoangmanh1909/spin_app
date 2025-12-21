@@ -5,6 +5,7 @@ class FeedResponse {
   String? content;
   String? isCustom;
   int? likes;
+  int? commentCount;
   String? createdAt;
   String? title;
 
@@ -27,6 +28,7 @@ class FeedResponse {
     likes = json['Likes'];
     createdAt = json['CreatedAt'];
     title = json['Title'];
+    commentCount = json['CommentCount'];
   }
 
   Map<String, dynamic> toJson() {
@@ -39,6 +41,7 @@ class FeedResponse {
     data['Likes'] = likes;
     data['CreatedAt'] = createdAt;
     data['Title'] = title;
+    data['CommentCount'] = commentCount;
     return data;
   }
 }

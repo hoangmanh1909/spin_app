@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:spin_app/controller/process_controller.dart';
+import 'package:spin_app/models/feed_comment_response.dart';
 import 'package:spin_app/models/feed_response.dart';
 import 'package:spin_app/models/login_response.dart';
 import 'package:spin_app/sreen/auth_sreen.dart';
+import 'package:spin_app/sreen/comment_bottom_sheet.dart';
 import 'package:spin_app/sreen/write_story_screen.dart';
 
 class FeedScreen extends StatefulWidget {
@@ -405,46 +407,104 @@ class _FeedScreenState extends State<FeedScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // --- TITLE ---
             Text(
-              item.title!,
+              item.title ?? '',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
                 color: Colors.black87,
               ),
             ),
+
             const SizedBox(height: 6),
+
+            // --- CONTENT ---
             Text(
-              item.content!,
+              item.content ?? '',
               style: const TextStyle(fontSize: 14, height: 1.4),
             ),
-            const SizedBox(height: 10),
+
+            const SizedBox(height: 12),
+
+            // --- ACTION BAR ---
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // ❤️ LIKE + 💬 COMMENT
                 Row(
                   children: [
+                    // LIKE
                     GestureDetector(
                       onTap: () => _onLikeTapped(item),
-                      child: Icon(
-                        item.isCustom == "Y"
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        color: item.isCustom == "Y"
-                            ? Colors.red
-                            : Colors.grey[600],
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: item.isCustom == "Y"
+                              ? Colors.red.withOpacity(0.12)
+                              : Colors.grey.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              item.isCustom == "Y"
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: item.isCustom == "Y"
+                                  ? Colors.red
+                                  : Colors.grey[700],
+                              size: 18,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              "${item.likes ?? 0}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      "${item.likes}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 13,
+
+                    const SizedBox(width: 16),
+
+                    // 💬 COMMENT
+                    GestureDetector(
+                      onTap: () => _openCommentSheet(item),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline,
+                              size: 18,
+                              color: Colors.grey[700],
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              "${item.commentCount ?? 0}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
+
+                // ⏰ TIME
                 Row(
                   children: [
                     Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
@@ -459,6 +519,58 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _openCommentSheet(FeedResponse item) {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return CommentBottomSheet(
+          userId: userProfile?.id ?? 0,
+          feedId: item.id!,
+          onCommentAdded: () {
+            // optional: tăng commentCount ngay
+            setState(() {
+              item.commentCount = (item.commentCount ?? 0) + 1;
+            });
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCommentItem(FeedCommentResponse c) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            c.userName!,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            c.content!,
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            c.createdAt!,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.black45,
+            ),
+          ),
+        ],
       ),
     );
   }
